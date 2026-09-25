@@ -4,6 +4,7 @@ linters:
   enable:
     - bodyclose
     - copyloopvar
+    - depguard
     - dupl
     - errorlint
     - goconst
@@ -16,6 +17,44 @@ linters:
     - sqlclosecheck
     - testifylint
   settings:
+    depguard:
+      rules:
+        domain-pure:
+          files:
+            - "**/internal/domain/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - github.com/shopspring/decimal
+        app-layers:
+          files:
+            - "**/internal/app/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - github.com/nikimonax/laretz/internal/app
+            - github.com/nikimonax/laretz/internal/domain
+            - github.com/go-logr/logr
+            - github.com/shopspring/decimal
+        lib-reusable:
+          files:
+            - "**/internal/lib/**"
+            - "!$test"
+          allow:
+            - $gostd
+        impl-layers:
+          files:
+            - "**/internal/impl/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/nikimonax/laretz/internal/server
+              desc: impl must not depend on server
+            - pkg: github.com/nikimonax/laretz/internal/lib
+              desc: impl must not depend on lib
+            - pkg: github.com/nikimonax/laretz/internal/testing
+              desc: impl must not depend on testing helpers
+            - pkg: github.com/nikimonax/laretz/cmd
+              desc: impl must not depend on cmd
     gocyclo:
       min-complexity: 15
     goconst:
