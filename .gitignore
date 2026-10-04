@@ -1,3 +1,8 @@
 .agents
+.vscode
+
+bin/*
+
+config.yaml
 .env
-/laretz
+.data

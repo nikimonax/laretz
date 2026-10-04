@@ -19,14 +19,14 @@ linters:
   settings:
     depguard:
       rules:
-        domain-pure:
+        domain-layer:
           files:
             - "**/internal/domain/**"
             - "!$test"
           allow:
             - $gostd
             - github.com/shopspring/decimal
-        app-layers:
+        application-layer:
           files:
             - "**/internal/app/**"
             - "!$test"
@@ -36,13 +36,7 @@ linters:
             - github.com/nikimonax/laretz/internal/domain
             - github.com/go-logr/logr
             - github.com/shopspring/decimal
-        lib-reusable:
-          files:
-            - "**/internal/lib/**"
-            - "!$test"
-          allow:
-            - $gostd
-        impl-layers:
+        infrastructure-layer:
           files:
             - "**/internal/impl/**"
             - "!$test"

@@ -30,6 +30,7 @@ func isURLEncoded(r *http.Request) bool {
 func rewrite(w http.ResponseWriter, r *http.Request) *http.Request {
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxFormBytes))
 	_ = r.Body.Close()
+
 	if err != nil {
 		r.Body = http.NoBody
 		return r

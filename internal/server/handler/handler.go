@@ -1,34 +1,35 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-logr/logr"
 
+	"github.com/nikimonax/laretz/internal/app/usecase"
 	"github.com/nikimonax/laretz/internal/lib/spoof"
-	mw "github.com/nikimonax/laretz/internal/server/middleware"
+	"github.com/nikimonax/laretz/internal/server/middleware"
 	"github.com/nikimonax/laretz/internal/server/static"
-	"github.com/nikimonax/laretz/internal/server/views/pages"
 )
 
-func New(logger logr.Logger) http.Handler {
+func New(
+	logger logr.Logger,
+	portfolioList *usecase.ListPortfoliosUseCase,
+	portfolioCreate *usecase.CreatePortfolioUseCase,
+	portfolioUpdate *usecase.UpdatePortfolioUseCase,
+	portfolioDelele *usecase.DeletePortfolioUseCase,
+) chi.Router {
 	router := chi.NewRouter()
-	router.Use(mw.RequestLog(logger), spoof.Middleware, mw.OriginCheck)
+
+	router.Use(
+		middleware.OriginCheck,
+		spoof.Middleware,
+		middleware.NewLoggingMiddleware(logger),
+	)
 
 	static.Mount(router)
-	router.Get("/", home(logger))
+	router.Get("/", NewHomeHandler(logger, portfolioList).ServeHTTP)
+	router.Post("/portfolio", NewCreatePortfolioHandler(logger, portfolioCreate).ServeHTTP)
+	router.Post("/portfolio/{id}", NewUpdatePortfolioHandler(logger, portfolioUpdate).ServeHTTP)
+	router.Delete("/portfolio/{id}", NewDeletePortfolioHandler(logger, portfolioDelele).ServeHTTP)
 
 	return router
-}
-
-func home(logger logr.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		err := pages.Home().Render(r.Context(), w)
-		if err != nil {
-			http.Error(w, "render failed", http.StatusInternalServerError)
-			logger.Error(err, "render home page")
-		}
-	}
 }
