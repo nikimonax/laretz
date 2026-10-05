@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,12 +12,15 @@ import (
 
 	"github.com/nikimonax/laretz/internal/app"
 	"github.com/nikimonax/laretz/internal/app/usecase"
+	"github.com/nikimonax/laretz/internal/server/renderer"
+	"github.com/nikimonax/laretz/internal/server/views/pages"
 )
 
 type UpdatePortfolioHandler struct {
 	logger logr.Logger
 
-	portfolioUpdate *usecase.UpdatePortfolioUseCase
+	responseRenderer *renderer.ResponseRenderer[pages.HomeData]
+	portfolioUpdate  *usecase.UpdatePortfolioUseCase
 }
 
 // ServeHTTP implements [http.Handler].
@@ -24,19 +28,30 @@ func (handler *UpdatePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	portfolioID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 
 	if err != nil {
-		http.NotFound(w, r)
+		mutate := renderer.HomeWithError("Invalid path parameter.")
+		if err := handler.responseRenderer.Render(r.Context(), w, mutate); err != nil {
+			handler.logger.Error(err, "render")
+		}
 		return
 	}
 
+	dialog := fmt.Sprintf(pages.DialogRenamePortfolioFormat, portfolioID)
+
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+		mutate := renderer.HomeWithError("Invalid form", dialog)
+		if err := handler.responseRenderer.Render(r.Context(), w, mutate); err != nil {
+			handler.logger.Error(err, "render")
+		}
 		return
 	}
 
 	portfolioName := strings.TrimSpace(r.FormValue("name"))
 
 	if portfolioName == "" {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+		mutate := renderer.HomeWithError("Name must not be empty.", dialog)
+		if err := handler.responseRenderer.Render(r.Context(), w, mutate); err != nil {
+			handler.logger.Error(err, "render")
+		}
 		return
 	}
 
@@ -46,13 +61,16 @@ func (handler *UpdatePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	if err := handler.portfolioUpdate.Execute(r.Context(), cmd); err != nil {
+		message := "Something went wrong."
+
 		if errors.Is(err, app.ErrEntityNotFound) {
-			http.NotFound(w, r)
-			return
+			message = "Portfolio not found."
 		}
 
-		handler.logger.Error(err, "update portfolio")
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		mutate := renderer.HomeWithError(message, dialog)
+		if err := handler.responseRenderer.Render(r.Context(), w, mutate); err != nil {
+			handler.logger.Error(err, "render")
+		}
 		return
 	}
 
@@ -61,10 +79,12 @@ func (handler *UpdatePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 func NewUpdatePortfolioHandler(
 	logger logr.Logger,
+	responseRenderer *renderer.ResponseRenderer[pages.HomeData],
 	portfolioUpdate *usecase.UpdatePortfolioUseCase,
 ) http.Handler {
 	return &UpdatePortfolioHandler{
-		logger:          logger,
-		portfolioUpdate: portfolioUpdate,
+		logger:           logger,
+		responseRenderer: responseRenderer,
+		portfolioUpdate:  portfolioUpdate,
 	}
 }

@@ -4,14 +4,19 @@ import (
 	"fmt"
 
 	"github.com/nikimonax/laretz/internal/domain"
+	"github.com/nikimonax/laretz/internal/server/views"
+	"github.com/nikimonax/laretz/internal/server/views/components"
+)
+
+const (
+	DialogCreatePortfolio       = "create-portfolio"
+	DialogRenamePortfolioFormat = "rename-portfolio-%d"
+	DialogDeletePortfolioFormat = "delete-portfolio-%d"
 )
 
 type HomeData struct {
-	Portfolios  []domain.Portfolio
-	OpenCreate  bool
-	CreateError string
-	RenamingID  int64
-	RenameError string
+	Portfolios []domain.Portfolio
+	Error      views.Error
 }
 
 templ Home(data HomeData) {
@@ -27,6 +32,9 @@ templ Home(data HomeData) {
 			<main class="container">
 				<h1>Laretz</h1>
 				<p>A single-user crypto portfolio tracker. Record Buy/Sell Operations and value your Portfolios using market data from pluggable sources.</p>
+				if data.Error.Dialog == "" {
+					@components.Alert(data.Error.Message)
+				}
 				<button data-dialog="create-portfolio">New portfolio</button>
 				if len(data.Portfolios) == 0 {
 					<article>
@@ -38,20 +46,20 @@ templ Home(data HomeData) {
 							for _, p := range data.Portfolios {
 								<li>
 									{ p.Name }
-									<button class="outline" data-dialog={ fmt.Sprintf("rename-portfolio-%d", p.ID) }>Rename</button>
-									<button class="outline" data-dialog={ fmt.Sprintf("delete-portfolio-%d", p.ID) }>Delete</button>
+									<button class="outline" data-dialog={ fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) }>Rename</button>
+									<button class="outline" data-dialog={ fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) }>Delete</button>
 								</li>
 							}
 						</ul>
 					</article>
 				}
 			</main>
-			<dialog id="create-portfolio" open?={ data.OpenCreate }>
+			<dialog id={ DialogCreatePortfolio } open?={ data.Error.Dialog == DialogCreatePortfolio }>
 				<article>
 					<form method="post" action="/portfolio">
 						<header><h3>New portfolio</h3></header>
-						if data.CreateError != "" {
-							<p role="alert">{ data.CreateError }</p>
+						if data.Error.Dialog == DialogCreatePortfolio {
+							@components.Alert(data.Error.Message)
 						}
 						<label>
 							Name
@@ -65,12 +73,12 @@ templ Home(data HomeData) {
 				</article>
 			</dialog>
 			for _, p := range data.Portfolios {
-				<dialog id={ fmt.Sprintf("rename-portfolio-%d", p.ID) } open?={ data.RenamingID == p.ID }>
+				<dialog id={ fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) }>
 					<article>
 						<form method="post" action={ fmt.Sprintf("/portfolio/%d", p.ID) }>
 							<header><h3>Rename portfolio</h3></header>
-							if data.RenamingID == p.ID && data.RenameError != "" {
-								<p role="alert">{ data.RenameError }</p>
+							if data.Error.Dialog == fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) {
+								@components.Alert(data.Error.Message)
 							}
 							<label>
 								Name
@@ -83,11 +91,14 @@ templ Home(data HomeData) {
 						</form>
 					</article>
 				</dialog>
-				<dialog id={ fmt.Sprintf("delete-portfolio-%d", p.ID) }>
+				<dialog id={ fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) }>
 					<article>
 						<form method="post" action={ fmt.Sprintf("/portfolio/%d", p.ID) }>
 							<input type="hidden" name="_method" value="DELETE"/>
 							<header><h3>Delete portfolio</h3></header>
+							if data.Error.Dialog == fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) {
+								@components.Alert(data.Error.Message)
+							}
 							<p>Delete &ldquo;{ p.Name }&rdquo; and all of its operations?</p>
 							<footer>
 								<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>

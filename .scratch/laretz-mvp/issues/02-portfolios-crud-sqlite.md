@@ -4,11 +4,11 @@
 
 **Blocked by:** 01 (Скелет приложения и HTTP-сервер).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] БД открывается в `~/.local/share/laretz` (linux) / appdata (windows), goose-миграции применяются при старте, schema содержит portfolio
-- [ ] `/` показывает список портфелей (пока только имя) и empty state, когда их нет
-- [ ] Создание и переименование через модалку на `/`, POST + PRG, ошибки валидации — перерисовка формы
-- [ ] Удаление — method spoofing на тот же эндпоинт + `<dialog>` confirm
-- [ ] Команды/запросы (Create/Update/Delete Portfolio, ListPortfolios) через CQS-слой с тестами
-- [ ] Валидация: имя непустое
+- [x] БД открывается в `~/.local/share/laretz` (linux) / appdata (windows), goose-миграции применяются при старте, schema содержит portfolio
+- [x] `/` показывает список портфелей (пока только имя) и empty state, когда их нет
+- [x] Создание и переименование через модалку на `/`, POST + PRG, ошибки валидации — перерисовка формы
+- [x] Удаление — method spoofing на тот же эндпоинт + `<dialog>` confirm
+- [x] Команды/запросы (Create/Update/Delete Portfolio, ListPortfolios) через CQS-слой с тестами
+- [x] Валидация: имя непустое

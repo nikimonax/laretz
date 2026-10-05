@@ -7,6 +7,7 @@ import (
 	"github.com/nikimonax/laretz/internal/app/usecase"
 	"github.com/nikimonax/laretz/internal/lib/spoof"
 	"github.com/nikimonax/laretz/internal/server/middleware"
+	"github.com/nikimonax/laretz/internal/server/renderer"
 	"github.com/nikimonax/laretz/internal/server/static"
 )
 
@@ -25,11 +26,24 @@ func New(
 		middleware.NewLoggingMiddleware(logger),
 	)
 
-	static.Mount(router)
-	router.Get("/", NewHomeHandler(logger, portfolioList).ServeHTTP)
-	router.Post("/portfolio", NewCreatePortfolioHandler(logger, portfolioCreate).ServeHTTP)
-	router.Post("/portfolio/{id}", NewUpdatePortfolioHandler(logger, portfolioUpdate).ServeHTTP)
-	router.Delete("/portfolio/{id}", NewDeletePortfolioHandler(logger, portfolioDelele).ServeHTTP)
+	homeRenderer := renderer.Home(portfolioList)
+
+	notFoundHandler := NewPageHandler(logger, renderer.NotFound())
+	methodNotAllowedHandler := NewPageHandler(logger, renderer.MethodNotAllowed())
+
+	homeHandler := NewPageHandler(logger, homeRenderer)
+	portfolioCreateHandler := NewCreatePortfolioHandler(logger, homeRenderer, portfolioCreate)
+	portfolioUpdateHandler := NewUpdatePortfolioHandler(logger, homeRenderer, portfolioUpdate)
+	portfolioDeleleHandler := NewDeletePortfolioHandler(logger, homeRenderer, portfolioDelele)
+
+	static.Mount(router, notFoundHandler)
+	router.Get("/", homeHandler.ServeHTTP)
+	router.Post("/portfolio", portfolioCreateHandler.ServeHTTP)
+	router.Post("/portfolio/{id}", portfolioUpdateHandler.ServeHTTP)
+	router.Delete("/portfolio/{id}", portfolioDeleleHandler.ServeHTTP)
+
+	router.NotFound(notFoundHandler.ServeHTTP)
+	router.MethodNotAllowed(methodNotAllowedHandler.ServeHTTP)
 
 	return router
 }

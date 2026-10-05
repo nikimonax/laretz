@@ -16,7 +16,7 @@ import (
 
 func mountedRouter() *chi.Mux {
 	r := chi.NewRouter()
-	static.Mount(r)
+	static.Mount(r, http.NotFoundHandler())
 	return r
 }
 

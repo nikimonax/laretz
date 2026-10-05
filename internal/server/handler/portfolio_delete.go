@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -10,12 +11,15 @@ import (
 
 	"github.com/nikimonax/laretz/internal/app"
 	"github.com/nikimonax/laretz/internal/app/usecase"
+	"github.com/nikimonax/laretz/internal/server/renderer"
+	"github.com/nikimonax/laretz/internal/server/views/pages"
 )
 
 type DeletePortfolioHandler struct {
 	logger logr.Logger
 
-	portfolioDelete *usecase.DeletePortfolioUseCase
+	responseRenderer *renderer.ResponseRenderer[pages.HomeData]
+	portfolioDelete  *usecase.DeletePortfolioUseCase
 }
 
 // ServeHTTP implements [http.Handler].
@@ -23,20 +27,27 @@ func (handler *DeletePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	portfolioID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 
 	if err != nil {
-		http.NotFound(w, r)
+		mutate := renderer.HomeWithError("Invalid path parameter.")
+		if err := handler.responseRenderer.Render(r.Context(), w, mutate); err != nil {
+			handler.logger.Error(err, "render")
+		}
 		return
 	}
 
 	cmd := usecase.DeletePortfolio{ID: portfolioID}
 
 	if err := handler.portfolioDelete.Execute(r.Context(), cmd); err != nil {
+		message := "Something went wrong."
+		dialog := fmt.Sprintf(pages.DialogDeletePortfolioFormat, portfolioID)
+
 		if errors.Is(err, app.ErrEntityNotFound) {
-			http.NotFound(w, r)
-			return
+			message = "Portfolio not found."
 		}
 
-		handler.logger.Error(err, "delete portfolio")
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		mutate := renderer.HomeWithError(message, dialog)
+		if err := handler.responseRenderer.Render(r.Context(), w, mutate); err != nil {
+			handler.logger.Error(err, "render")
+		}
 		return
 	}
 
@@ -45,10 +56,12 @@ func (handler *DeletePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 func NewDeletePortfolioHandler(
 	logger logr.Logger,
+	responseRenderer *renderer.ResponseRenderer[pages.HomeData],
 	portfolioDelete *usecase.DeletePortfolioUseCase,
 ) http.Handler {
 	return &DeletePortfolioHandler{
-		logger:          logger,
-		portfolioDelete: portfolioDelete,
+		logger:           logger,
+		responseRenderer: responseRenderer,
+		portfolioDelete:  portfolioDelete,
 	}
 }
