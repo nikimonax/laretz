@@ -6,7 +6,7 @@
 
 **Status:** done
 
-- [x] БД открывается в `~/.local/share/laretz` (linux) / appdata (windows), goose-миграции применяются при старте, schema содержит portfolio
+- [x] БД открывается в `os.UserConfigDir()/laretz` (linux: `~/.config/laretz`, windows: `%AppData%`), `laretz.db` рядом с `config.yaml`; goose-миграции применяются при старте, schema содержит portfolio
 - [x] `/` показывает список портфелей (пока только имя) и empty state, когда их нет
 - [x] Создание и переименование через модалку на `/`, POST + PRG, ошибки валидации — перерисовка формы
 - [x] Удаление — method spoofing на тот же эндпоинт + `<dialog>` confirm

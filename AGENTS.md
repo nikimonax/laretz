@@ -13,22 +13,25 @@ These are standing rules from the human reviewer. Violating any of them fails re
 ### Layering (enforced by depguard in `.golangci.yml`)
 
 - `internal/domain`: stdlib + shopspring/decimal only.
-- `internal/app`: own tree + domain only; logr is the one allowed logging dependency.
-- `internal/impl`: app + domain + infra libraries; never server, lib, testing, or cmd.
+- `internal/app`: own tree + domain only; logr is the one allowed logging dependency. Ports are interfaces in `internal/app/interfaces`; use cases are `*UseCase` structs with `Execute(ctx, cmd)` in `internal/app/usecase`; sentinel errors in `internal/app` (e.g. `ErrEntityNotFound`).
+- `internal/impl`: app + domain + infra libraries; never server, lib, testing, shared, or cmd. Subpackages by concern: `database` (connection + goose migrations, embedded), `repository` (sqlc queries + generated code + port implementations), `plugin` (external adapters).
+- `internal/shared`: cross-cutting support that may import infra libraries (logging, validator); consumable by server and impl.
 - `internal/lib`: reusable utilities, stdlib only.
-- `internal/app` and `internal/domain` are plain Go packages, never fx modules. fx lives in `internal/impl` (infrastructure modules) and `internal/server` (composition root).
+- `internal/app` and `internal/domain` are plain Go packages, never fx modules. fx lives only in `internal/server/module` (one `fx.Module` per concern); `internal/impl` exposes plain constructors wired by those modules.
 - fx wiring names: `provide*` for funcs passed to fx.Provide, `register*` for fx.Invoke hooks; plain constructors (`New*`) may be handed to fx.Provide directly.
 
 ### Code style
 
 - Least code wins: prefer a stdlib or chi built-in over custom code; generalize over duplicating.
-- Root `main.go` stays a one-liner delegating to `cmd.Execute()`; all CLI parsing lives in the `cmd` package; the app entrypoint and assembly (logger, fx start/stop) live in `internal/server`.
-- Middleware order in the router: request log, then method spoof, then origin check.
-- Method spoofing is the `_method=DELETE` field in the POST body (ADR-0003); the spoof middleware lives in `internal/lib/spoof`.
+- The binary entrypoint is `cmd/laretz/main.go`, a one-liner delegating to `cli.Run()`; all CLI parsing (urfave/cli v3) lives in `cmd/laretz/cli`; the app assembly (config, logger, fx start/stop) lives in `internal/server` (`app.go` + `module/`).
+- Configuration is a yaml file in the data dir (`os.UserConfigDir()/laretz`), parsed and validated in `internal/server/config`; path override via `-c/--config` or `LARETZ_CONFIG`; `.env` is loaded by godotenv in `cmd/laretz/cli`.
+- Middleware order in the router: origin check, then method spoof, then request log.
+- Method spoofing is the `_method=DELETE` field in the POST body (ADR-0003); the spoof middleware lives in `internal/lib/spoof`; DELETE actions get a real chi `DELETE` route, the form POSTs to the same URL with the hidden field.
 - Origin enforcement is a custom middleware; go-chi/cors only toggles response headers and never rejects a request (verified against its source). It lives in `internal/server/middleware`.
-- Request logging goes through chi `middleware.RequestLogger` with a logr formatter.
+- Request logging is `shared/logging.NewLoggingMiddleware` (logr-backed), mounted in the router via `middleware.NewLoggingMiddleware`.
+- Server-rendered pages go through `server/renderer`: a `*ResponseRenderer[PageData]` per page (Provider loads data via queries, Mutate adds errors); POST handlers re-render the page on validation errors with `views.Error{Message, Dialog}` instead of redirecting.
 - Browser opening is opt-in via the `-o/--open` flag.
-- Test helpers and mocks live in `internal/testing/` (`httpx` for request builders, `mocks/` for generated mocks); never duplicate helpers across test packages.
+- Test helpers and mocks live in `internal/testing/` (`httpx` for request builders, `shared` for context-aware httptest requests, `mocks/` for generated mocks); never duplicate helpers across test packages.
 - Never commit, copy, or log `.env` contents or API keys.
 
 ## Agent skills
