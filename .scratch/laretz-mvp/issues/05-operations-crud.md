@@ -11,4 +11,4 @@
 - [ ] Валидация: время не в будущем, quantity и total_usd > 0; децималы shopspring, в БД TEXT
 - [ ] Таблица операций на `/portfolio/:id`: сортировка по времени desc, независимая пагинация `?ops_page=`
 - [ ] Редактирование с префиллом (GetOperation), удаление — spoofing + `<dialog>`; минус-балансы не валидируются
-- [ ] Команды Create/Update/DeleteOperation + GetOperation с тестами
+- [ ] Команды Create/Update/DeleteOperation + GetOperation (тесты — в 09, единый тестовый проход в конце MVP)

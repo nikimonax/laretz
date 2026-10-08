@@ -49,7 +49,7 @@ A pluggable external service that provides a Catalog of ExternalAssets and their
 _Avoid_: price provider, plugin, vendor, feed
 
 **Integration**:
-A user-enabled MarketDataSource with its credentials. The only source-facing word shown to users.
+A MarketDataSource the user enabled by providing its api_key in the config file. The only source-facing word shown to users.
 _Avoid_: connection, account, plugin
 
 **Catalog**:

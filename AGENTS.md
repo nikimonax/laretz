@@ -8,13 +8,12 @@ These are standing rules from the human reviewer. Violating any of them fails re
 
 - Implement one ticket at a time from the active tracker (`.scratch/<feature>/issues/`). After a ticket passes its gates: stop and present the diff for human review. Commit only after explicit approval.
 - Gates per ticket, in order: `go build ./...`, `go vet ./...`, `golangci-lint run` (hard gate; `.golangci.yml` is law, never relax it), targeted `go test` per touched package, then full `go test ./...`. The full suite plus a code review run once after the last ticket.
-- Test-first at the pre-agreed seams: domain services, CQS commands/queries against sqlite, middleware, external HTTP adapters against fake servers.
 
 ### Layering (enforced by depguard in `.golangci.yml`)
 
 - `internal/domain`: stdlib + shopspring/decimal only.
 - `internal/app`: own tree + domain only; logr is the one allowed logging dependency. Ports are interfaces in `internal/app/interfaces`; use cases are `*UseCase` structs with `Execute(ctx, cmd)` in `internal/app/usecase`; sentinel errors in `internal/app` (e.g. `ErrEntityNotFound`).
-- `internal/impl`: app + domain + infra libraries; never server, lib, testing, shared, or cmd. Subpackages by concern: `database` (connection + goose migrations, embedded), `repository` (sqlc queries + generated code + port implementations), `plugin` (external adapters).
+- `internal/impl`: app + domain + infra libraries; never server, lib, testing, shared, or cmd. Subpackages by concern: `database` (connection + goose migrations, embedded; sqlc `queries/` + `generated/`), `repository` (port implementations over sqlc), `handler` (sqlite command handlers), `plugin` (plugin host: plugin registry, host facade, `ExternalAssetProviderRegistry` + adapters); external plugin implementations live outside `internal/` (e.g. `plugin/coingecko`) behind the `pkg/plugin` API.
 - `internal/shared`: cross-cutting support that may import infra libraries (logging, validator); consumable by server and impl.
 - `internal/lib`: reusable utilities, stdlib only.
 - `internal/app` and `internal/domain` are plain Go packages, never fx modules. fx lives only in `internal/server/module` (one `fx.Module` per concern); `internal/impl` exposes plain constructors wired by those modules.
