@@ -1,31 +1,22 @@
 package pages
 
+import "github.com/nikimonax/laretz/internal/server/views/components"
+
 type ErrorData struct {
 	Title string
 	Detail string
 }
 
 templ ErrorPage(data ErrorData) {
-	<!DOCTYPE html>
-	<html lang="en">
-		<head>
-			<meta charset="utf-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<title>{ data.Title } · Laretz</title>
-			<link rel="stylesheet" href="/static/css/pico.min.css"/>
-		</head>
-		<body>
-			<main class="container">
-				<article>
-					<header>
-						<h1>{ data.Title }</h1>
-					</header>
-					<p>{ data.Detail }</p>
-					<footer>
-						<a href="/">Back to home</a>
-					</footer>
-				</article>
-			</main>
-		</body>
-	</html>
+	@components.Layout(data.Title + " · Laretz") {
+		<article class="error-state">
+			<header>
+				<h1>{ data.Title }</h1>
+			</header>
+			<p>{ data.Detail }</p>
+			<footer>
+				<a href="/">Back to home</a>
+			</footer>
+		</article>
+	}
 }

@@ -12,103 +12,131 @@ const (
 	DialogCreatePortfolio       = "create-portfolio"
 	DialogRenamePortfolioFormat = "rename-portfolio-%d"
 	DialogDeletePortfolioFormat = "delete-portfolio-%d"
+	DialogSyncAssets            = "sync-assets"
 )
 
 type HomeData struct {
 	Portfolios []domain.Portfolio
+	Providers  []domain.SourceID
 	Error      views.Error
 }
 
 templ Home(data HomeData) {
-	<!DOCTYPE html>
-	<html lang="en">
-		<head>
-			<meta charset="utf-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<title>Laretz</title>
-			<link rel="stylesheet" href="/static/css/pico.min.css"/>
-		</head>
-		<body>
-			<main class="container">
-				<h1>Laretz</h1>
-				<p>A single-user crypto portfolio tracker. Record Buy/Sell Operations and value your Portfolios using market data from pluggable sources.</p>
-				if data.Error.Dialog == "" {
+	@components.Layout("Laretz") {
+		<div class="page-head">
+			<div>
+				<h1>Portfolios</h1>
+				<p>Record Buy/Sell operations and value your portfolios with market data.</p>
+			</div>
+			<div class="page-actions">
+				if len(data.Providers) > 0 {
+					<button class="outline" data-dialog={ DialogSyncAssets }>Sync assets</button>
+				}
+				<button data-dialog={ DialogCreatePortfolio }>New portfolio</button>
+			</div>
+		</div>
+		if data.Error.Dialog == "" {
+			@components.Alert(data.Error.Message)
+		}
+		if len(data.Portfolios) == 0 {
+			<article class="empty-state">
+				<h2>No portfolios yet</h2>
+				<p>Create your first portfolio to start tracking operations.</p>
+				<button data-dialog={ DialogCreatePortfolio }>Create portfolio</button>
+			</article>
+		} else {
+			<ul class="portfolio-grid">
+if len(data.Providers) > 0 {
+		<dialog id={ DialogSyncAssets } open?={ data.Error.Dialog == DialogSyncAssets }>
+			<article>
+				<form method="post" action="/assets/sync">
+					<header><h3>Sync assets</h3></header>
+					if data.Error.Dialog == DialogSyncAssets {
+						@components.Alert(data.Error.Message)
+					}
+					<label>
+						Source
+						<select name="source" required autofocus>
+							for _, source := range data.Providers {
+								<option value={ source }>{ source }</option>
+							}
+						</select>
+					</label>
+					<footer>
+						<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+						<button type="submit">Sync</button>
+					</footer>
+				</form>
+			</article>
+		</dialog>
+	}
+	for _, p := range data.Portfolios {
+					<li>
+						<article class="portfolio-card">
+							<h3>{ p.Name }</h3>
+							<p class="meta">Created { p.CreatedAt.Format("Jan 2, 2006") }</p>
+							<footer>
+								<button class="outline" data-dialog={ fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) }>Rename</button>
+								<button class="outline" data-dialog={ fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) }>Delete</button>
+							</footer>
+						</article>
+					</li>
+				}
+			</ul>
+		}
+	}
+	<dialog id={ DialogCreatePortfolio } open?={ data.Error.Dialog == DialogCreatePortfolio }>
+		<article>
+			<form method="post" action="/portfolio">
+				<header><h3>New portfolio</h3></header>
+				if data.Error.Dialog == DialogCreatePortfolio {
 					@components.Alert(data.Error.Message)
 				}
-				<button data-dialog="create-portfolio">New portfolio</button>
-				if len(data.Portfolios) == 0 {
-					<article>
-						<p>No portfolios yet. Create your first one to start tracking operations.</p>
-					</article>
-				} else {
-					<article>
-						<ul>
-							for _, p := range data.Portfolios {
-								<li>
-									{ p.Name }
-									<button class="outline" data-dialog={ fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) }>Rename</button>
-									<button class="outline" data-dialog={ fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) }>Delete</button>
-								</li>
-							}
-						</ul>
-					</article>
-				}
-			</main>
-			<dialog id={ DialogCreatePortfolio } open?={ data.Error.Dialog == DialogCreatePortfolio }>
-				<article>
-					<form method="post" action="/portfolio">
-						<header><h3>New portfolio</h3></header>
-						if data.Error.Dialog == DialogCreatePortfolio {
-							@components.Alert(data.Error.Message)
-						}
-						<label>
-							Name
-							<input type="text" name="name" placeholder="e.g. Long term"/>
-						</label>
-						<footer>
-							<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
-							<button type="submit">Create</button>
-						</footer>
-					</form>
-				</article>
-			</dialog>
-			for _, p := range data.Portfolios {
-				<dialog id={ fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) }>
-					<article>
-						<form method="post" action={ fmt.Sprintf("/portfolio/%d", p.ID) }>
-							<header><h3>Rename portfolio</h3></header>
-							if data.Error.Dialog == fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) {
-								@components.Alert(data.Error.Message)
-							}
-							<label>
-								Name
-								<input type="text" name="name" value={ p.Name }/>
-							</label>
-							<footer>
-								<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
-								<button type="submit">Rename</button>
-							</footer>
-						</form>
-					</article>
-				</dialog>
-				<dialog id={ fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) }>
-					<article>
-						<form method="post" action={ fmt.Sprintf("/portfolio/%d", p.ID) }>
-							<input type="hidden" name="_method" value="DELETE"/>
-							<header><h3>Delete portfolio</h3></header>
-							if data.Error.Dialog == fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) {
-								@components.Alert(data.Error.Message)
-							}
-							<p>Delete &ldquo;{ p.Name }&rdquo; and all of its operations?</p>
-							<footer>
-								<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
-								<button type="submit" class="outline">Delete</button>
-							</footer>
-						</form>
-					</article>
-				</dialog>
-			}
-			<script>document.addEventListener('click',function(e){var d=e.target.closest('[data-dialog]');if(d)document.getElementById(d.dataset.dialog).showModal()})</script>
-		</body>
-	</html>
+				<label>
+					Name
+					<input type="text" name="name" placeholder="e.g. Long term" required autofocus/>
+				</label>
+				<footer>
+					<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+					<button type="submit">Create</button>
+				</footer>
+			</form>
+		</article>
+	</dialog>
+	for _, p := range data.Portfolios {
+		<dialog id={ fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) }>
+			<article>
+				<form method="post" action={ fmt.Sprintf("/portfolio/%d", p.ID) }>
+					<header><h3>Rename portfolio</h3></header>
+					if data.Error.Dialog == fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) {
+						@components.Alert(data.Error.Message)
+					}
+					<label>
+						Name
+						<input type="text" name="name" value={ p.Name } required autofocus/>
+					</label>
+					<footer>
+						<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+						<button type="submit">Rename</button>
+					</footer>
+				</form>
+			</article>
+		</dialog>
+		<dialog id={ fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) }>
+			<article>
+				<form method="post" action={ fmt.Sprintf("/portfolio/%d", p.ID) }>
+					<input type="hidden" name="_method" value="DELETE"/>
+					<header><h3>Delete portfolio</h3></header>
+					if data.Error.Dialog == fmt.Sprintf(DialogDeletePortfolioFormat, p.ID) {
+						@components.Alert(data.Error.Message)
+					}
+					<p>Delete &ldquo;{ p.Name }&rdquo; and all of its operations?</p>
+					<footer>
+						<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+						<button type="submit" class="outline">Delete</button>
+					</footer>
+				</form>
+			</article>
+		</dialog>
+	}
 }
