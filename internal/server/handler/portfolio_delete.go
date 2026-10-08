@@ -37,7 +37,7 @@ func (handler *DeletePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	cmd := usecase.DeletePortfolio{ID: portfolioID}
 
 	if err := handler.portfolioDelete.Execute(r.Context(), cmd); err != nil {
-		message := "Something went wrong."
+		message := messageSomethingWentWrong
 		dialog := fmt.Sprintf(pages.DialogDeletePortfolioFormat, portfolioID)
 
 		if errors.Is(err, app.ErrEntityNotFound) {

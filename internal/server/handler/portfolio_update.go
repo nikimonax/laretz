@@ -61,7 +61,7 @@ func (handler *UpdatePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	if err := handler.portfolioUpdate.Execute(r.Context(), cmd); err != nil {
-		message := "Something went wrong."
+		message := messageSomethingWentWrong
 
 		if errors.Is(err, app.ErrEntityNotFound) {
 			message = "Portfolio not found."
