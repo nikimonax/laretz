@@ -23,6 +23,19 @@ var (
 	configUnmarshal = yaml.Unmarshal
 )
 
+type RawMessage struct {
+	unmarshal func(any) error
+}
+
+func (msg *RawMessage) UnmarshalYAML(unmarshal func(any) error) error {
+	msg.unmarshal = unmarshal
+	return nil
+}
+
+func (msg *RawMessage) Unmarshal(v any) error {
+	return msg.unmarshal(v)
+}
+
 func unmarshalZapcoreLevel(level *zapcore.Level, data []byte) (err error) {
 	*level, err = zapcore.ParseLevel(strings.TrimSpace(string(data)))
 	if err != nil {

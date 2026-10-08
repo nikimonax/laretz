@@ -7,6 +7,7 @@ import (
 
 	"go.uber.org/zap/zapcore"
 
+	"github.com/nikimonax/laretz/internal/impl/plugin"
 	"github.com/nikimonax/laretz/internal/shared/logging"
 	"github.com/nikimonax/laretz/internal/shared/validator"
 )
@@ -46,9 +47,10 @@ type LogConfig struct {
 }
 
 type Config struct {
-	Server ServerConfig
-	Log    LogConfig
-	Data   DataConfig
+	Server  ServerConfig
+	Log     LogConfig
+	Data    DataConfig
+	Plugins map[plugin.PluginID]RawMessage
 }
 
 func DefaultAppDataDir() string {
@@ -78,7 +80,7 @@ func DefaultConfig() *Config {
 	}
 }
 
-func EnsureConfig(configPath string) (*Config, error) {
+func ReadConfig(configPath string) (*Config, error) {
 	if configPath == "" {
 		return nil, NewErrConfig("empty path")
 	}
@@ -87,38 +89,61 @@ func EnsureConfig(configPath string) (*Config, error) {
 
 	_, err := os.Stat(configPath)
 
-	var cfg *Config
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := os.ReadFile(configPath)
 
 	if err != nil {
-		configDir := filepath.Dir(configPath)
+		return nil, err
+	}
 
-		if err := os.MkdirAll(configDir, 0755); err != nil {
-			return nil, err
-		}
+	cfg, err := DecodeConfig(content)
 
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+func WriteConfig(cfg *Config, configPath string) error {
+	configDir := filepath.Dir(configPath)
+
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return err
+	}
+
+	content, err := EncodeConfig(cfg)
+
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(configPath, content, 0644); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func EnsureConfig(configPath string) (*Config, error) {
+	if configPath == "" {
+		return nil, NewErrConfig("empty path")
+	}
+
+	configPath = filepath.Clean(configPath)
+
+	cfg, err := ReadConfig(configPath)
+
+	if os.IsNotExist(err) {
 		cfg = DefaultConfig()
+		err = WriteConfig(cfg, configPath)
+	}
 
-		content, err := EncodeConfig(cfg)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if err := os.WriteFile(configPath, content, 0644); err != nil {
-			return nil, err
-		}
-	} else {
-		content, err := os.ReadFile(configPath)
-
-		if err != nil {
-			return nil, err
-		}
-
-		cfg, err = DecodeConfig(content)
-
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	return cfg, nil
