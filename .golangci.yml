@@ -16,6 +16,7 @@ linters:
     - rowserrcheck
     - sqlclosecheck
     - testifylint
+    - unused
   settings:
     depguard:
       rules:
@@ -49,6 +50,26 @@ linters:
               desc: impl must not depend on testing helpers
             - pkg: github.com/nikimonax/laretz/cmd
               desc: impl must not depend on cmd
+        plugin-api:
+          files:
+            - "**/pkg/plugin**"
+            - "!$test"
+          allow:
+            - $gostd
+            - github.com/go-logr/logr
+        plugin-implementation:
+          files:
+            - "**/plugin**"
+            - "!**/internal/**"
+            - "!**/pkg/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/nikimonax/laretz/cmd
+              desc: plugins must not depend on cmd
+            - pkg: github.com/nikimonax/laretz/internal
+              desc: plugins must not depend on internal
+            - pkg: github.com/nikimonax/laretz/plugin
+              desc: plugins must not depend on other plugins
     gocyclo:
       min-complexity: 15
     goconst:
