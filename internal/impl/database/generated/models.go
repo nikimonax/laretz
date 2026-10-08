@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+type ExternalAsset struct {
+	ID         int64
+	Source     string
+	ExternalID string
+	Symbol     string
+	Name       string
+	SyncedAt   time.Time
+}
+
 type Portfolio struct {
 	ID        int64
 	Name      string

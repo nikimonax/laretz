@@ -8,7 +8,7 @@ import (
 	"github.com/nikimonax/laretz/internal/app"
 	"github.com/nikimonax/laretz/internal/app/interfaces"
 	"github.com/nikimonax/laretz/internal/domain"
-	"github.com/nikimonax/laretz/internal/impl/repository/generated"
+	"github.com/nikimonax/laretz/internal/impl/database/generated"
 )
 
 type SqlitePortfolioRepository struct {
