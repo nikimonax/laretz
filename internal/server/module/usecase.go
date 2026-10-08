@@ -15,6 +15,8 @@ func UseCaseModule() fx.Option {
 			usecase.NewListPortfoliosUseCase,
 			usecase.NewUpdatePortfolioUseCase,
 			usecase.NewDeletePortfolioUseCase,
+			usecase.NewSyncExternalAssetsUseCase,
+			usecase.NewListExternalAssetProvidersUseCase,
 		),
 	)
 }
