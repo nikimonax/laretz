@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 
-	"github.com/nikimonax/laretz/internal/app/commands"
 	"github.com/nikimonax/laretz/internal/app/interfaces"
 	"github.com/nikimonax/laretz/internal/domain"
 )
@@ -14,7 +13,7 @@ type SyncExternalAssets struct {
 
 type SyncExternalAssetsUseCase struct {
 	providers interfaces.ExternalAssetProviderRegistry
-	handler   interfaces.CommandHandler[commands.SyncExternalAssetsCommand]
+	assets    interfaces.ExternalAssetRepository
 }
 
 func (usecase *SyncExternalAssetsUseCase) Execute(ctx context.Context, cmd SyncExternalAssets) error {
@@ -24,22 +23,21 @@ func (usecase *SyncExternalAssetsUseCase) Execute(ctx context.Context, cmd SyncE
 		return err
 	}
 
-	assets, err := provider.Provide(ctx)
+	catalog, err := provider.Provide(ctx)
 
 	if err != nil {
 		return err
 	}
 
-	cmdNext := commands.SyncExternalAssetsCommand{Assets: assets}
-	return usecase.handler.Handle(ctx, cmdNext)
+	return usecase.assets.Sync(ctx, catalog)
 }
 
 func NewSyncExternalAssetsUseCase(
 	providers interfaces.ExternalAssetProviderRegistry,
-	handler interfaces.CommandHandler[commands.SyncExternalAssetsCommand],
+	assets interfaces.ExternalAssetRepository,
 ) *SyncExternalAssetsUseCase {
 	return &SyncExternalAssetsUseCase{
 		providers: providers,
-		handler:   handler,
+		assets:    assets,
 	}
 }

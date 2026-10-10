@@ -66,7 +66,7 @@ Queries:
 | GetOperation(id) | префилл модалки редактирования |
 | ListExternalAssetProviders() | зарегистрированные источники (основа кнопки «Sync assets») |
 
-Конвенция кода: use-case — структура `*UseCase` в `internal/app/usecase` с методом `Execute(ctx, cmd)`; порты — интерфейсы в `internal/app/interfaces`; sentinel-ошибки — в `internal/app` (`ErrEntityNotFound`). Команды, меняющие строки, опираются на `:execrows` sqlc и мапят 0 строк в `ErrEntityNotFound`.
+Конвенция кода: use-case — структура `*UseCase` в `internal/app/usecase` с методом `Execute(ctx, cmd)`; порты — интерфейсы в `internal/app/interfaces`, только репозитории (ADR-0005: один порт на концепцию, транзакции внутри реализаций); sentinel-ошибки — в `internal/app` (`ErrEntityNotFound`). Команды, меняющие строки, опираются на `:execrows` sqlc и мапят 0 строк в `ErrEntityNotFound`.
 
 ## Схема sqlite
 
@@ -118,14 +118,13 @@ pkg/
              AssetProvider, Asset
   lib/       httplog/ (RoundTripper для внешних HTTP: method/url/status/duration, без заголовков)
 internal/
-  app/       use-case слой (CQS): usecase/ (*UseCase + Execute), commands/, dto/,
-             interfaces/ (порты, напр. PortfolioRepository, ExternalAssetProviderRegistry),
+  app/       use-case слой (CQS): usecase/ (*UseCase + Execute), interfaces/ (порты-репозитории,
+             напр. PortfolioRepository, ExternalAssetProviderRegistry — ADR-0005),
              errors.go (sentinel-ошибки)
   domain/    сущности; сервисы: BalanceTimeline, CoveragePlanner, Valuation
   impl/      infrastructure: database/ (Connect + goose-миграции go:embed; queries/ + generated/ — sqlc),
-             repository/ (реализации портов поверх sqlc), handler/ (командные обработчики против sqlite,
-             напр. SyncExternalAssets), plugin/ (реестр плагинов DefaultRegistry, фасад хоста,
-             ExternalAssetProviderRegistry + адаптер pkg.AssetProvider → порт)
+             repository/ (реализации портов поверх sqlc; транзакции внутри), plugin/ (реестр плагинов
+             DefaultRegistry, фасад хоста, ExternalAssetProviderRegistry + адаптер pkg.AssetProvider → порт)
   lib/       reusable, stdlib-only: spoof/, browser/
   shared/    cross-cutting c внешними зависимостями: logging/ (zap+logr, request-log middleware, fx/goose-адаптеры),
              validator/ (go-playground singleton)
