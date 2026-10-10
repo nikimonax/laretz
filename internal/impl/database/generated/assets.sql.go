@@ -7,7 +7,268 @@ package generated
 
 import (
 	"context"
+	"time"
 )
+
+const countExternalAssets = `-- name: CountExternalAssets :one
+SELECT COUNT(*) FROM external_asset
+`
+
+func (q *Queries) CountExternalAssets(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countExternalAssets)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteAsset = `-- name: DeleteAsset :execrows
+DELETE FROM asset
+WHERE id = ?
+`
+
+func (q *Queries) DeleteAsset(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteAsset, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const deleteAssetLinks = `-- name: DeleteAssetLinks :exec
+DELETE FROM asset_link
+WHERE asset_id = ?
+`
+
+func (q *Queries) DeleteAssetLinks(ctx context.Context, assetID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteAssetLinks, assetID)
+	return err
+}
+
+const getAsset = `-- name: GetAsset :one
+SELECT 
+    a.id,
+    a.symbol,
+    a.name,
+    a.created_at,
+    a.updated_at,
+    ea.id AS external_asset_id,
+    ea.source,
+    ea.external_id,
+    ea.symbol AS external_symbol,
+    ea.name AS external_name,
+    ea.synced_at
+FROM asset a
+JOIN asset_link l ON l.asset_id = a.id AND l.is_primary = 1
+JOIN external_asset ea ON ea.id = l.external_asset_id
+WHERE a.id = ?
+`
+
+type GetAssetRow struct {
+	ID              int64
+	Symbol          string
+	Name            string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	ExternalAssetID int64
+	Source          string
+	ExternalID      string
+	ExternalSymbol  string
+	ExternalName    string
+	SyncedAt        time.Time
+}
+
+func (q *Queries) GetAsset(ctx context.Context, id int64) (GetAssetRow, error) {
+	row := q.db.QueryRowContext(ctx, getAsset, id)
+	var i GetAssetRow
+	err := row.Scan(
+		&i.ID,
+		&i.Symbol,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExternalAssetID,
+		&i.Source,
+		&i.ExternalID,
+		&i.ExternalSymbol,
+		&i.ExternalName,
+		&i.SyncedAt,
+	)
+	return i, err
+}
+
+const getAssetPrimaryLinkSource = `-- name: GetAssetPrimaryLinkSource :one
+SELECT ea.source
+FROM asset_link l
+JOIN external_asset ea ON ea.id = l.external_asset_id
+WHERE l.asset_id = ? AND l.is_primary = 1
+`
+
+func (q *Queries) GetAssetPrimaryLinkSource(ctx context.Context, assetID int64) (string, error) {
+	row := q.db.QueryRowContext(ctx, getAssetPrimaryLinkSource, assetID)
+	var source string
+	err := row.Scan(&source)
+	return source, err
+}
+
+const getExternalAsset = `-- name: GetExternalAsset :one
+SELECT id, source, external_id, symbol, name, synced_at
+FROM external_asset
+WHERE id = ?
+`
+
+func (q *Queries) GetExternalAsset(ctx context.Context, id int64) (ExternalAsset, error) {
+	row := q.db.QueryRowContext(ctx, getExternalAsset, id)
+	var i ExternalAsset
+	err := row.Scan(
+		&i.ID,
+		&i.Source,
+		&i.ExternalID,
+		&i.Symbol,
+		&i.Name,
+		&i.SyncedAt,
+	)
+	return i, err
+}
+
+const insertAsset = `-- name: InsertAsset :execlastid
+INSERT INTO asset (symbol, name)
+VALUES (?, ?)
+`
+
+type InsertAssetParams struct {
+	Symbol string
+	Name   string
+}
+
+func (q *Queries) InsertAsset(ctx context.Context, arg InsertAssetParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, insertAsset, arg.Symbol, arg.Name)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const insertAssetLink = `-- name: InsertAssetLink :exec
+INSERT INTO asset_link (asset_id, external_asset_id, is_primary)
+VALUES (?, ?, 1)
+`
+
+type InsertAssetLinkParams struct {
+	AssetID         int64
+	ExternalAssetID int64
+}
+
+func (q *Queries) InsertAssetLink(ctx context.Context, arg InsertAssetLinkParams) error {
+	_, err := q.db.ExecContext(ctx, insertAssetLink, arg.AssetID, arg.ExternalAssetID)
+	return err
+}
+
+const listAssets = `-- name: ListAssets :many
+SELECT 
+    a.id,
+    a.symbol,
+    a.name,
+    a.created_at,
+    a.updated_at,
+    ea.id AS external_asset_id,
+    ea.source,
+    ea.external_id,
+    ea.symbol AS external_symbol,
+    ea.name AS external_name,
+    ea.synced_at
+FROM asset a
+JOIN asset_link l ON l.asset_id = a.id AND l.is_primary = 1
+JOIN external_asset ea ON ea.id = l.external_asset_id
+ORDER BY a.symbol, a.id
+`
+
+type ListAssetsRow struct {
+	ID              int64
+	Symbol          string
+	Name            string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	ExternalAssetID int64
+	Source          string
+	ExternalID      string
+	ExternalSymbol  string
+	ExternalName    string
+	SyncedAt        time.Time
+}
+
+func (q *Queries) ListAssets(ctx context.Context) ([]ListAssetsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAssets)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAssetsRow
+	for rows.Next() {
+		var i ListAssetsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Symbol,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ExternalAssetID,
+			&i.Source,
+			&i.ExternalID,
+			&i.ExternalSymbol,
+			&i.ExternalName,
+			&i.SyncedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateAssetFields = `-- name: UpdateAssetFields :execrows
+UPDATE asset
+SET symbol = ?, name = ?
+WHERE id = ?
+`
+
+type UpdateAssetFieldsParams struct {
+	Symbol string
+	Name   string
+	ID     int64
+}
+
+func (q *Queries) UpdateAssetFields(ctx context.Context, arg UpdateAssetFieldsParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateAssetFields, arg.Symbol, arg.Name, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const updateAssetPrimaryLink = `-- name: UpdateAssetPrimaryLink :execrows
+UPDATE asset_link
+SET external_asset_id = ?
+WHERE asset_id = ? AND is_primary = 1
+`
+
+type UpdateAssetPrimaryLinkParams struct {
+	ExternalAssetID int64
+	AssetID         int64
+}
+
+func (q *Queries) UpdateAssetPrimaryLink(ctx context.Context, arg UpdateAssetPrimaryLinkParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateAssetPrimaryLink, arg.ExternalAssetID, arg.AssetID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
 
 const upsertExternalAsset = `-- name: UpsertExternalAsset :exec
 INSERT INTO external_asset (source, external_id, symbol, name)
