@@ -18,6 +18,8 @@ func PluginModule() fx.Option {
 		fx.Provide(
 			provideExternalAssetProviderRegistry,
 			provideExternalAssetProviderRegistryInterface,
+			provideQuoteFeedRegistry,
+			provideQuoteFeedRegistryInterface,
 			providePluginFacade,
 		),
 		fx.Invoke(applyPlugins),
@@ -34,10 +36,21 @@ func provideExternalAssetProviderRegistryInterface(
 	return registry
 }
 
+func provideQuoteFeedRegistry() *plugin.QuoteFeedRegistry {
+	return plugin.NewQuoteFeedRegistry()
+}
+
+func provideQuoteFeedRegistryInterface(
+	registry *plugin.QuoteFeedRegistry,
+) interfaces.QuoteFeedRegistry {
+	return registry
+}
+
 func providePluginFacade(
 	cfg *config.Config,
 	logger logr.Logger,
 	registry *plugin.ExternalAssetProviderRegistry,
+	quotes *plugin.QuoteFeedRegistry,
 ) *plugin.Facade {
 	configs := make(map[plugin.PluginID]plugin.Unmarshable, len(cfg.Plugins))
 
@@ -45,7 +58,7 @@ func providePluginFacade(
 		configs[pluginID] = &raw
 	}
 
-	return plugin.NewFacade(configs, logger, *registry)
+	return plugin.NewFacade(configs, logger, *registry, *quotes)
 }
 
 func applyPlugins(facade *plugin.Facade, registry *plugin.Registry) error {

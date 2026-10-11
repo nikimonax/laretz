@@ -29,6 +29,7 @@ func UseCaseModule() fx.Option {
 			usecase.NewImportAssetUseCase,
 			usecase.NewUpdateAssetUseCase,
 			usecase.NewDeleteAssetUseCase,
+			usecase.NewFetchQuotesUseCase,
 		),
 	)
 }
