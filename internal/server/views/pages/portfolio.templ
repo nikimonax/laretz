@@ -113,6 +113,10 @@ templ Portfolio(data PortfolioData) {
 			<div class="page-actions">
 				<a class="outline" role="button" href="/">Portfolios</a>
 				if data.Portfolio.ID != 0 {
+					<form method="post" action={ templ.JoinURLErrs(fmt.Sprintf("/quotes/fetch?ops_page=%d", data.OpsPage)) }>
+						<input type="hidden" name="portfolio" value={ fmt.Sprintf("%d", data.Portfolio.ID) }/>
+						<button class="outline">Fetch quotes</button>
+					</form>
 					<button data-dialog={ DialogCreateOperation }>New operation</button>
 				}
 			</div>
