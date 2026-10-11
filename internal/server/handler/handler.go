@@ -15,9 +15,13 @@ func New(
 	logger logr.Logger,
 	providersList *usecase.ListExternalAssetProvidersUseCase,
 	portfolioList *usecase.ListPortfoliosUseCase,
+	portfolioGet *usecase.GetPortfolioUseCase,
 	portfolioCreate *usecase.CreatePortfolioUseCase,
 	portfolioUpdate *usecase.UpdatePortfolioUseCase,
 	portfolioDelele *usecase.DeletePortfolioUseCase,
+	operationCreate *usecase.CreateOperationUseCase,
+	operationUpdate *usecase.UpdateOperationUseCase,
+	operationDelete *usecase.DeleteOperationUseCase,
 	externalAssetsSync *usecase.SyncExternalAssetsUseCase,
 	externalAssetsCount *usecase.CountExternalAssetsUseCase,
 	externalAssetsSearch *usecase.SearchExternalAssetsUseCase,
@@ -44,9 +48,13 @@ func New(
 	homeHandler := NewPageHandler(logger, homeRenderer)
 	assetsHandler := NewPageHandler(logger, assetsRenderer)
 	assetSearchHandler := NewAssetSearchHandler(logger, externalAssetsSearch, assetGet, externalAssetsCount)
+	portfolioGetHandler := NewPortfolioGetHandler(logger, portfolioGet, assetsList)
 	portfolioCreateHandler := NewCreatePortfolioHandler(logger, homeRenderer, portfolioCreate)
 	portfolioUpdateHandler := NewUpdatePortfolioHandler(logger, homeRenderer, portfolioUpdate)
 	portfolioDeleleHandler := NewDeletePortfolioHandler(logger, homeRenderer, portfolioDelele)
+	createOperationHandler := NewCreateOperationHandler(logger, portfolioGet, assetsList, operationCreate)
+	updateOperationHandler := NewUpdateOperationHandler(logger, portfolioGet, assetsList, operationUpdate)
+	deleteOperationHandler := NewDeleteOperationHandler(logger, portfolioGet, assetsList, operationDelete)
 	syncExternalAssetsHandler := NewSyncExternalAssetsHandler(logger, assetsRenderer, externalAssetsSync)
 	importAssetHandler := NewImportAssetHandler(logger, externalAssetsSearch, assetGet, externalAssetsCount, assetImport)
 	updateAssetHandler := NewUpdateAssetHandler(logger, assetsRenderer, externalAssetsSearch, assetGet, externalAssetsCount, assetUpdate)
@@ -54,9 +62,13 @@ func New(
 
 	static.Mount(router, notFoundHandler)
 	router.Get("/", homeHandler.ServeHTTP)
+	router.Get("/portfolio/{id}", portfolioGetHandler.ServeHTTP)
 	router.Post("/portfolio", portfolioCreateHandler.ServeHTTP)
 	router.Post("/portfolio/{id}", portfolioUpdateHandler.ServeHTTP)
 	router.Delete("/portfolio/{id}", portfolioDeleleHandler.ServeHTTP)
+	router.Post("/portfolio/{id}/operation", createOperationHandler.ServeHTTP)
+	router.Post("/portfolio/{id}/operation/{operationID}", updateOperationHandler.ServeHTTP)
+	router.Delete("/portfolio/{id}/operation/{operationID}", deleteOperationHandler.ServeHTTP)
 	router.Post("/assets/sync", syncExternalAssetsHandler.ServeHTTP)
 	router.Get("/assets", assetsHandler.ServeHTTP)
 	router.Get("/assets/search", assetSearchHandler.ServeHTTP)
