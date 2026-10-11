@@ -13,12 +13,19 @@ import (
 
 func New(
 	logger logr.Logger,
-	portfolioList *usecase.ListPortfoliosUseCase,
 	providersList *usecase.ListExternalAssetProvidersUseCase,
+	portfolioList *usecase.ListPortfoliosUseCase,
 	portfolioCreate *usecase.CreatePortfolioUseCase,
 	portfolioUpdate *usecase.UpdatePortfolioUseCase,
 	portfolioDelele *usecase.DeletePortfolioUseCase,
 	externalAssetsSync *usecase.SyncExternalAssetsUseCase,
+	externalAssetsCount *usecase.CountExternalAssetsUseCase,
+	externalAssetsSearch *usecase.SearchExternalAssetsUseCase,
+	assetsList *usecase.ListAssetsUseCase,
+	assetGet *usecase.GetAssetUseCase,
+	assetImport *usecase.ImportAssetUseCase,
+	assetUpdate *usecase.UpdateAssetUseCase,
+	assetDelete *usecase.DeleteAssetUseCase,
 ) chi.Router {
 	router := chi.NewRouter()
 
@@ -28,16 +35,22 @@ func New(
 		middleware.NewLoggingMiddleware(logger),
 	)
 
-	homeRenderer := renderer.Home(portfolioList, providersList)
+	homeRenderer := renderer.Home(portfolioList)
+	assetsRenderer := renderer.Assets(assetsList, externalAssetsCount, providersList)
 
 	notFoundHandler := NewPageHandler(logger, renderer.NotFound())
 	methodNotAllowedHandler := NewPageHandler(logger, renderer.MethodNotAllowed())
 
 	homeHandler := NewPageHandler(logger, homeRenderer)
+	assetsHandler := NewPageHandler(logger, assetsRenderer)
+	assetSearchHandler := NewAssetSearchHandler(logger, externalAssetsSearch, assetGet, externalAssetsCount)
 	portfolioCreateHandler := NewCreatePortfolioHandler(logger, homeRenderer, portfolioCreate)
 	portfolioUpdateHandler := NewUpdatePortfolioHandler(logger, homeRenderer, portfolioUpdate)
 	portfolioDeleleHandler := NewDeletePortfolioHandler(logger, homeRenderer, portfolioDelele)
-	syncExternalAssetsHandler := NewSyncExternalAssetsHandler(logger, homeRenderer, externalAssetsSync)
+	syncExternalAssetsHandler := NewSyncExternalAssetsHandler(logger, assetsRenderer, externalAssetsSync)
+	importAssetHandler := NewImportAssetHandler(logger, externalAssetsSearch, assetGet, externalAssetsCount, assetImport)
+	updateAssetHandler := NewUpdateAssetHandler(logger, assetsRenderer, externalAssetsSearch, assetGet, externalAssetsCount, assetUpdate)
+	deleteAssetHandler := NewDeleteAssetHandler(logger, assetsRenderer, assetDelete)
 
 	static.Mount(router, notFoundHandler)
 	router.Get("/", homeHandler.ServeHTTP)
@@ -45,6 +58,11 @@ func New(
 	router.Post("/portfolio/{id}", portfolioUpdateHandler.ServeHTTP)
 	router.Delete("/portfolio/{id}", portfolioDeleleHandler.ServeHTTP)
 	router.Post("/assets/sync", syncExternalAssetsHandler.ServeHTTP)
+	router.Get("/assets", assetsHandler.ServeHTTP)
+	router.Get("/assets/search", assetSearchHandler.ServeHTTP)
+	router.Post("/assets", importAssetHandler.ServeHTTP)
+	router.Post("/assets/{id}", updateAssetHandler.ServeHTTP)
+	router.Delete("/assets/{id}", deleteAssetHandler.ServeHTTP)
 
 	router.NotFound(notFoundHandler.ServeHTTP)
 	router.MethodNotAllowed(methodNotAllowedHandler.ServeHTTP)
