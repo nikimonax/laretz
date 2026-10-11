@@ -30,6 +30,7 @@ func New(
 	assetImport *usecase.ImportAssetUseCase,
 	assetUpdate *usecase.UpdateAssetUseCase,
 	assetDelete *usecase.DeleteAssetUseCase,
+	quotesFetch *usecase.FetchQuotesUseCase,
 ) chi.Router {
 	router := chi.NewRouter()
 
@@ -59,6 +60,7 @@ func New(
 	importAssetHandler := NewImportAssetHandler(logger, externalAssetsSearch, assetGet, externalAssetsCount, assetImport)
 	updateAssetHandler := NewUpdateAssetHandler(logger, assetsRenderer, externalAssetsSearch, assetGet, externalAssetsCount, assetUpdate)
 	deleteAssetHandler := NewDeleteAssetHandler(logger, assetsRenderer, assetDelete)
+	fetchQuotesHandler := NewFetchQuotesHandler(logger, quotesFetch, portfolioGet, assetsList)
 
 	static.Mount(router, notFoundHandler)
 	router.Get("/", homeHandler.ServeHTTP)
@@ -75,6 +77,7 @@ func New(
 	router.Post("/assets", importAssetHandler.ServeHTTP)
 	router.Post("/assets/{id}", updateAssetHandler.ServeHTTP)
 	router.Delete("/assets/{id}", deleteAssetHandler.ServeHTTP)
+	router.Post("/quotes/fetch", fetchQuotesHandler.ServeHTTP)
 
 	router.NotFound(notFoundHandler.ServeHTTP)
 	router.MethodNotAllowed(methodNotAllowedHandler.ServeHTTP)

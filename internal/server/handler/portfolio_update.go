@@ -64,7 +64,7 @@ func (handler *UpdatePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		message := messageSomethingWentWrong
 
 		if errors.Is(err, app.ErrEntityNotFound) {
-			message = "Portfolio not found."
+			message = messagePortfolioNotFound
 		}
 
 		mutate := renderer.HomeWithError(message, dialog)

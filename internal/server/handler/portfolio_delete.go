@@ -41,7 +41,7 @@ func (handler *DeletePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		dialog := fmt.Sprintf(pages.DialogDeletePortfolioFormat, portfolioID)
 
 		if errors.Is(err, app.ErrEntityNotFound) {
-			message = "Portfolio not found."
+			message = messagePortfolioNotFound
 		}
 
 		mutate := renderer.HomeWithError(message, dialog)
