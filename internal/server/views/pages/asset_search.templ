@@ -1,0 +1,123 @@
+package pages
+
+import (
+	"fmt"
+
+	"github.com/nikimonax/laretz/internal/domain"
+	"github.com/nikimonax/laretz/internal/server/views"
+	"github.com/nikimonax/laretz/internal/server/views/components"
+)
+
+const DialogImportAssetFormat = "import-asset-%d"
+
+type AssetRelink struct {
+	AssetID     domain.AssetID
+	AssetSymbol string
+	Source      domain.SourceID
+}
+
+type AssetSearchData struct {
+	Query        string
+	Results      []domain.ExternalAsset
+	CatalogEmpty bool
+	Relink       *AssetRelink
+	Error        views.Error
+}
+
+templ AssetSearch(data AssetSearchData) {
+	@components.Layout("Search assets · Laretz") {
+		<div class="page-head">
+			<div>
+				if data.Relink != nil {
+					<h1>Re-link asset</h1>
+					<p>Pick a new catalog entry for &ldquo;{ data.Relink.AssetSymbol }&rdquo; from { data.Relink.Source }.</p>
+				} else {
+					<h1>Import asset</h1>
+					<p>Search the synced catalog and import a canonical asset.</p>
+				}
+			</div>
+			<div class="page-actions">
+				<a class="outline" role="button" href="/assets">Back to assets</a>
+			</div>
+		</div>
+		if data.Error.Dialog == "" {
+			@components.Alert(data.Error.Message)
+		}
+		<form method="get" action="/assets/search" class="search-form">
+			if data.Relink != nil {
+				<input type="hidden" name="relink" value={ fmt.Sprintf("%d", data.Relink.AssetID) }/>
+			}
+			<input type="search" name="query" placeholder="Symbol or name, e.g. btc" value={ data.Query } autofocus/>
+			<button type="submit">Search</button>
+		</form>
+		if data.CatalogEmpty {
+			<article class="empty-state">
+				<h2>Catalog is empty</h2>
+				<p>Sync assets from a market data source on the assets page first.</p>
+				<a role="button" href="/assets">Go to assets</a>
+			</article>
+		} else if data.Query == "" {
+			<article class="empty-state">
+				<h2>Search the catalog</h2>
+				<p>Type a symbol or a name, e.g. &ldquo;btc&rdquo; or &ldquo;ethereum&rdquo;.</p>
+			</article>
+		} else if len(data.Results) == 0 {
+			<article class="empty-state">
+				<h2>No results</h2>
+				<p>Nothing found for &ldquo;{ data.Query }&rdquo;. Try a shorter query.</p>
+			</article>
+		} else {
+			<ul class="search-results">
+				for _, result := range data.Results {
+					<li>
+						<article class="search-result">
+							<div class="search-result-info">
+								<strong>{ result.Symbol }</strong>
+								<span class="meta">{ result.Name } · { result.SourceID }:{ result.ExternalID }</span>
+							</div>
+							if data.Relink != nil {
+								<form method="post" action={ templ.JoinURLErrs(fmt.Sprintf("/assets/%d", data.Relink.AssetID)) }>
+									<input type="hidden" name="query" value={ data.Query }/>
+									<input type="hidden" name="relink" value={ fmt.Sprintf("%d", data.Relink.AssetID) }/>
+									<input type="hidden" name="external_asset_id" value={ fmt.Sprintf("%d", result.ID) }/>
+									if result.SourceID == data.Relink.Source {
+										<button type="submit">Re-link</button>
+									} else {
+										<button type="submit" class="outline" disabled title="Only catalog entries of the same source can be linked">Re-link</button>
+									}
+								</form>
+							} else {
+								<button class="outline" data-dialog={ fmt.Sprintf(DialogImportAssetFormat, result.ID) }>Import</button>
+							}
+						</article>
+					</li>
+				}
+			</ul>
+			if data.Relink == nil {
+				for _, result := range data.Results {
+					<dialog id={ fmt.Sprintf(DialogImportAssetFormat, result.ID) }>
+						<article>
+							<form method="post" action="/assets">
+								<header><h3>Import asset</h3></header>
+								<input type="hidden" name="query" value={ data.Query }/>
+								<input type="hidden" name="external_asset_id" value={ fmt.Sprintf("%d", result.ID) }/>
+								<label>
+									Symbol
+									<input type="text" name="symbol" value={ result.Symbol } required autofocus/>
+								</label>
+								<label>
+									Name
+									<input type="text" name="name" value={ result.Name } required/>
+								</label>
+								<footer>
+									<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+									<button type="submit">Import</button>
+								</footer>
+							</form>
+						</article>
+					</dialog>
+				}
+			}
+		}
+	}
+}

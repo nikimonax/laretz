@@ -12,12 +12,10 @@ const (
 	DialogCreatePortfolio       = "create-portfolio"
 	DialogRenamePortfolioFormat = "rename-portfolio-%d"
 	DialogDeletePortfolioFormat = "delete-portfolio-%d"
-	DialogSyncAssets            = "sync-assets"
 )
 
 type HomeData struct {
 	Portfolios []domain.Portfolio
-	Providers  []domain.SourceID
 	Error      views.Error
 }
 
@@ -29,9 +27,6 @@ templ Home(data HomeData) {
 				<p>Record Buy/Sell operations and value your portfolios with market data.</p>
 			</div>
 			<div class="page-actions">
-				if len(data.Providers) > 0 {
-					<button class="outline" data-dialog={ DialogSyncAssets }>Sync assets</button>
-				}
 				<button data-dialog={ DialogCreatePortfolio }>New portfolio</button>
 			</div>
 		</div>
@@ -46,31 +41,7 @@ templ Home(data HomeData) {
 			</article>
 		} else {
 			<ul class="portfolio-grid">
-if len(data.Providers) > 0 {
-		<dialog id={ DialogSyncAssets } open?={ data.Error.Dialog == DialogSyncAssets }>
-			<article>
-				<form method="post" action="/assets/sync">
-					<header><h3>Sync assets</h3></header>
-					if data.Error.Dialog == DialogSyncAssets {
-						@components.Alert(data.Error.Message)
-					}
-					<label>
-						Source
-						<select name="source" required autofocus>
-							for _, source := range data.Providers {
-								<option value={ source }>{ source }</option>
-							}
-						</select>
-					</label>
-					<footer>
-						<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
-						<button type="submit">Sync</button>
-					</footer>
-				</form>
-			</article>
-		</dialog>
-	}
-	for _, p := range data.Portfolios {
+				for _, p := range data.Portfolios {
 					<li>
 						<article class="portfolio-card">
 							<h3>{ p.Name }</h3>
