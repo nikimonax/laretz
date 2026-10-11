@@ -63,3 +63,10 @@ type Portfolio struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type PricePoint struct {
+	ExternalAssetID int64
+	TsHour          time.Time
+	PriceUsd        decimal.Decimal
+	Granularity     string
+}

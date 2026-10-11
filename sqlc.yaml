@@ -24,3 +24,8 @@ sql:
               package: "decimal"
               type: "Decimal"
               pointer: true
+          - column: "price_point.price_usd"
+            go_type:
+              import: "github.com/shopspring/decimal"
+              package: "decimal"
+              type: "Decimal"
