@@ -28,7 +28,7 @@ func (repo *SqlitePortfolioRepository) Get(ctx context.Context, id int64) (domai
 		return domain.Portfolio{}, fmt.Errorf("get portfolio %d: %w", id, err)
 	}
 
-	return toDomain(row), nil
+	return toDomainPortfolio(row), nil
 }
 
 // Create implements [interfaces.PortfolioRepository].
@@ -39,7 +39,7 @@ func (repo *SqlitePortfolioRepository) Create(ctx context.Context, name string) 
 		return domain.Portfolio{}, fmt.Errorf("create portfolio: %w", err)
 	}
 
-	return toDomain(created), nil
+	return toDomainPortfolio(created), nil
 }
 
 // List implements [interfaces.PortfolioRepository].
@@ -53,7 +53,7 @@ func (repo *SqlitePortfolioRepository) List(ctx context.Context) ([]domain.Portf
 	portfolios := make([]domain.Portfolio, 0, len(rows))
 
 	for _, row := range rows {
-		portfolios = append(portfolios, toDomain(row))
+		portfolios = append(portfolios, toDomainPortfolio(row))
 	}
 
 	return portfolios, nil
@@ -98,7 +98,7 @@ func NewSqlitePortfolioRepository(db *sql.DB) interfaces.PortfolioRepository {
 	return &SqlitePortfolioRepository{queries: generated.New(db)}
 }
 
-func toDomain(row generated.Portfolio) domain.Portfolio {
+func toDomainPortfolio(row generated.Portfolio) domain.Portfolio {
 	return domain.Portfolio{
 		ID:        row.ID,
 		Name:      row.Name,

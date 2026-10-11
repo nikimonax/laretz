@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/nikimonax/laretz/internal/domain"
 	"github.com/nikimonax/laretz/internal/impl/database/generated"
 )
 
@@ -31,4 +32,30 @@ func inTransaction(
 	}
 
 	return nil
+}
+
+func toNullInt64(value *domain.AssetID) sql.NullInt64 {
+	if value == nil {
+		return sql.NullInt64{}
+	}
+
+	return sql.NullInt64{Int64: *value, Valid: true}
+}
+
+func fromNullInt64(value sql.NullInt64) *domain.AssetID {
+	if !value.Valid {
+		return nil
+	}
+
+	assetID := domain.AssetID(value.Int64)
+
+	return &assetID
+}
+
+func toNullString(value string) sql.NullString {
+	if value == "" {
+		return sql.NullString{}
+	}
+
+	return sql.NullString{String: value, Valid: true}
 }

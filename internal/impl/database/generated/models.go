@@ -5,7 +5,10 @@
 package generated
 
 import (
+	"database/sql"
 	"time"
+
+	decimal "github.com/shopspring/decimal"
 )
 
 type Asset struct {
@@ -37,6 +40,21 @@ type ExternalAssetFt struct {
 	Symbol     string
 	Name       string
 	ExternalID string
+}
+
+type Operation struct {
+	ID          int64
+	PortfolioID int64
+	AssetID     int64
+	Type        string
+	ExecutedAt  time.Time
+	Quantity    decimal.Decimal
+	TotalUsd    decimal.Decimal
+	FeeAmount   *decimal.Decimal
+	FeeAssetID  sql.NullInt64
+	Note        sql.NullString
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type Portfolio struct {

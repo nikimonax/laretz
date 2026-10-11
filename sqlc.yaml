@@ -7,3 +7,20 @@ sql:
       go:
         package: "generated"
         out: "internal/impl/database/generated"
+        overrides:
+          - column: "operation.quantity"
+            go_type:
+              import: "github.com/shopspring/decimal"
+              package: "decimal"
+              type: "Decimal"
+          - column: "operation.total_usd"
+            go_type:
+              import: "github.com/shopspring/decimal"
+              package: "decimal"
+              type: "Decimal"
+          - column: "operation.fee_amount"
+            go_type:
+              import: "github.com/shopspring/decimal"
+              package: "decimal"
+              type: "Decimal"
+              pointer: true
