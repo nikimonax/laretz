@@ -44,7 +44,7 @@ templ Home(data HomeData) {
 				for _, p := range data.Portfolios {
 					<li>
 						<article class="portfolio-card">
-							<h3>{ p.Name }</h3>
+							<h3><a href={ templ.JoinURLErrs(fmt.Sprintf("/portfolio/%d", p.ID)) }>{ p.Name }</a></h3>
 							<p class="meta">Created { p.CreatedAt.Format("Jan 2, 2006") }</p>
 							<footer>
 								<button class="outline" data-dialog={ fmt.Sprintf(DialogRenamePortfolioFormat, p.ID) }>Rename</button>

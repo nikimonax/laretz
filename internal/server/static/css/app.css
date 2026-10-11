@@ -134,23 +134,44 @@ main.container {
   margin-bottom: 0;
 }
 
-/* assets table */
+/* data tables */
 
-.assets-table .row-actions {
+.data-table .row-actions {
   text-align: right;
   white-space: nowrap;
 }
 
-.assets-table .row-actions button,
-.assets-table .row-actions a[role="button"] {
+.data-table .row-actions button,
+.data-table .row-actions a[role="button"] {
   width: auto;
   margin-bottom: 0;
   padding-block: 0.25rem;
 }
 
-.assets-table .meta {
+.data-table .meta {
   color: var(--pico-muted-color);
   font-size: 0.85rem;
+}
+
+/* pagination */
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pager span {
+  color: var(--pico-muted-color);
+  font-size: 0.85rem;
+}
+
+.pager a[role="button"] {
+  width: auto;
+  margin-bottom: 0;
+  padding-block: 0.25rem;
 }
 
 /* asset search */
@@ -286,6 +307,14 @@ dialog p[role="alert"] {
 
 .portfolio-card h3 {
   margin-bottom: 0.25rem;
+}
+
+.portfolio-card h3 a {
+  text-decoration: none;
+}
+
+.portfolio-card h3 a:hover {
+  text-decoration: underline;
 }
 
 .portfolio-card .meta {
