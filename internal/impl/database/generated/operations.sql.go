@@ -122,7 +122,62 @@ func (q *Queries) InsertOperation(ctx context.Context, arg InsertOperationParams
 	return result.RowsAffected()
 }
 
-const listOperations = `-- name: ListOperations :many
+const listPortfolioOperations = `-- name: ListPortfolioOperations :many
+SELECT
+    id,
+    portfolio_id,
+    asset_id,
+    type,
+    executed_at,
+    quantity,
+    total_usd,
+    fee_amount,
+    fee_asset_id,
+    note,
+    created_at,
+    updated_at
+FROM operation
+WHERE portfolio_id = ?
+ORDER BY executed_at ASC, id ASC
+`
+
+func (q *Queries) ListPortfolioOperations(ctx context.Context, portfolioID int64) ([]Operation, error) {
+	rows, err := q.db.QueryContext(ctx, listPortfolioOperations, portfolioID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Operation
+	for rows.Next() {
+		var i Operation
+		if err := rows.Scan(
+			&i.ID,
+			&i.PortfolioID,
+			&i.AssetID,
+			&i.Type,
+			&i.ExecutedAt,
+			&i.Quantity,
+			&i.TotalUsd,
+			&i.FeeAmount,
+			&i.FeeAssetID,
+			&i.Note,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPortfolioOperationsPaged = `-- name: ListPortfolioOperationsPaged :many
 SELECT
     id,
     portfolio_id,
@@ -142,14 +197,14 @@ ORDER BY executed_at DESC, id DESC
 LIMIT ? OFFSET ?
 `
 
-type ListOperationsParams struct {
+type ListPortfolioOperationsPagedParams struct {
 	PortfolioID int64
 	Limit       int64
 	Offset      int64
 }
 
-func (q *Queries) ListOperations(ctx context.Context, arg ListOperationsParams) ([]Operation, error) {
-	rows, err := q.db.QueryContext(ctx, listOperations, arg.PortfolioID, arg.Limit, arg.Offset)
+func (q *Queries) ListPortfolioOperationsPaged(ctx context.Context, arg ListPortfolioOperationsPagedParams) ([]Operation, error) {
+	rows, err := q.db.QueryContext(ctx, listPortfolioOperationsPaged, arg.PortfolioID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

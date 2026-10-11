@@ -5,6 +5,8 @@ import (
 )
 
 type ExternalAssetID = int64
+type SourceID = string
+
 type ExternalAsset struct {
 	ID         ExternalAssetID
 	SourceID   SourceID
@@ -15,6 +17,7 @@ type ExternalAsset struct {
 }
 
 type AssetID = int64
+
 type Asset struct {
 	ID        AssetID
 	Symbol    string

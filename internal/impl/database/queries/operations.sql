@@ -29,7 +29,25 @@ SELECT
 FROM operation
 WHERE id = ?;
 
--- name: ListOperations :many
+-- name: ListPortfolioOperations :many
+SELECT
+    id,
+    portfolio_id,
+    asset_id,
+    type,
+    executed_at,
+    quantity,
+    total_usd,
+    fee_amount,
+    fee_asset_id,
+    note,
+    created_at,
+    updated_at
+FROM operation
+WHERE portfolio_id = ?
+ORDER BY executed_at ASC, id ASC;
+
+-- name: ListPortfolioOperationsPaged :many
 SELECT
     id,
     portfolio_id,

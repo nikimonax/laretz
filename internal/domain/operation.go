@@ -7,7 +7,6 @@ import (
 )
 
 type OperationID = int64
-
 type OperationType string
 
 const (
