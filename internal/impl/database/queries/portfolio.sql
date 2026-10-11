@@ -8,6 +8,11 @@ SELECT id, name, created_at, updated_at
 FROM portfolio
 ORDER BY created_at, id;
 
+-- name: GetPortfolio :one
+SELECT id, name, created_at, updated_at
+FROM portfolio
+WHERE id = ?;
+
 -- name: RenamePortfolio :execrows
 UPDATE portfolio
 SET name = ?

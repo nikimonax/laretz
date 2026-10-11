@@ -40,6 +40,24 @@ func (q *Queries) DeletePortfolio(ctx context.Context, id int64) (int64, error) 
 	return result.RowsAffected()
 }
 
+const getPortfolio = `-- name: GetPortfolio :one
+SELECT id, name, created_at, updated_at
+FROM portfolio
+WHERE id = ?
+`
+
+func (q *Queries) GetPortfolio(ctx context.Context, id int64) (Portfolio, error) {
+	row := q.db.QueryRowContext(ctx, getPortfolio, id)
+	var i Portfolio
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listPortfolios = `-- name: ListPortfolios :many
 SELECT id, name, created_at, updated_at
 FROM portfolio

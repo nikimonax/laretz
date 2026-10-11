@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/nikimonax/laretz/internal/app"
@@ -13,6 +14,21 @@ import (
 
 type SqlitePortfolioRepository struct {
 	queries *generated.Queries
+}
+
+// Get implements [interfaces.PortfolioRepository].
+func (repo *SqlitePortfolioRepository) Get(ctx context.Context, id int64) (domain.Portfolio, error) {
+	row, err := repo.queries.GetPortfolio(ctx, id)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Portfolio{}, app.ErrEntityNotFound
+	}
+
+	if err != nil {
+		return domain.Portfolio{}, fmt.Errorf("get portfolio %d: %w", id, err)
+	}
+
+	return toDomain(row), nil
 }
 
 // Create implements [interfaces.PortfolioRepository].
