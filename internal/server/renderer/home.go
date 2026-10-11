@@ -15,7 +15,6 @@ func renderHome(ctx context.Context, w io.Writer, data pages.HomeData) error {
 
 func provideHomeData(
 	portfolioList *usecase.ListPortfoliosUseCase,
-	providersList *usecase.ListExternalAssetProvidersUseCase,
 ) func(ctx context.Context) pages.HomeData {
 	return func(ctx context.Context) pages.HomeData {
 		var data pages.HomeData
@@ -23,12 +22,10 @@ func provideHomeData(
 		portfolios, err := portfolioList.Execute(ctx)
 
 		if err != nil {
-			data.Error = views.Error{Message: "internal error"}
+			data.Error = views.Error{Message: messageInternalError}
 		} else {
 			data.Portfolios = portfolios
 		}
-
-		data.Providers = providersList.Execute(ctx)
 
 		return data
 	}
@@ -36,11 +33,10 @@ func provideHomeData(
 
 func Home(
 	portfolioList *usecase.ListPortfoliosUseCase,
-	providersList *usecase.ListExternalAssetProvidersUseCase,
 ) *ResponseRenderer[pages.HomeData] {
 	return NewResponseRenderer(
 		RendererFunc[pages.HomeData](renderHome),
-		ProviderFunc[pages.HomeData](provideHomeData(portfolioList, providersList)),
+		ProviderFunc[pages.HomeData](provideHomeData(portfolioList)),
 	)
 }
 

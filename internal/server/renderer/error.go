@@ -7,6 +7,8 @@ import (
 	"github.com/nikimonax/laretz/internal/server/views/pages"
 )
 
+const messageInternalError = "internal error"
+
 func renderError(ctx context.Context, w io.Writer, data pages.ErrorData) error {
 	return pages.ErrorPage(data).Render(ctx, w)
 }
