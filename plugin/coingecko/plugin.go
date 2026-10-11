@@ -37,9 +37,12 @@ func (p *Plugin) Init(app plugin.App) error {
 	transport := httplog.NewLoggingRoundTripper(http.DefaultTransport, app.Logger())
 	httpClient := &http.Client{Transport: transport, Timeout: 5 * time.Second}
 	coingeckoClient := NewClient(httpClient, cfg.BaseURL, cfg.APIKey)
-	provider := NewAssetProvider(coingeckoClient)
 
-	return app.RegisterAssetProvider(provider)
+	if err := app.RegisterAssetProvider(NewAssetProvider(coingeckoClient)); err != nil {
+		return err
+	}
+
+	return app.RegisterQuoteProvider(NewQuoteProvider(coingeckoClient))
 }
 
 func NewPlugin() plugin.Plugin {
