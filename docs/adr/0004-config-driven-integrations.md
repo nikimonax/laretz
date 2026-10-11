@@ -1,6 +1,6 @@
 # Integrations are config-driven; catalog sync is manual
 
-The MVP ships a fixed, compile-time set of plugins behind the `pkg/plugin` API (`Plugin`, `App`, `AssetProvider`). An integration counts as enabled when its config section (`plugins.<id>.api_key` in `config.yaml`) provides a key; without a key the plugin registers no catalog provider and the sync button on `/` does not appear. The catalog is loaded only on demand — the «Sync assets» button upserts the whole catalog of the chosen source as ExternalAssets (`POST /assets/sync`). The host side (plugin registry, config facade, `ExternalAssetProviderRegistry`) lives in `internal/impl/plugin`; plugins are registered into `plugin.DefaultRegistry()` in `cmd/laretz/main.go`.
+The MVP ships a fixed, compile-time set of plugins behind the `pkg/plugin` API (`Plugin`, `App`, `AssetProvider`). An integration counts as enabled when its config section (`plugins.<id>.api_key` in `config.yaml`) provides a key; without a key the plugin registers no catalog provider and the sync button on `/assets` does not appear. The catalog is loaded only on demand — the «Sync assets» button upserts the whole catalog of the chosen source as ExternalAssets (`POST /assets/sync`). The host side (plugin registry, config facade, `ExternalAssetProviderRegistry`) lives in `internal/impl/plugin`; plugins are registered into `plugin.DefaultRegistry()` in `cmd/laretz/main.go`.
 
 ## Considered options
 
