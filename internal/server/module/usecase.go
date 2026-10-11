@@ -13,8 +13,13 @@ func UseCaseModule() fx.Option {
 		fx.Provide(
 			usecase.NewCreatePortfolioUseCase,
 			usecase.NewListPortfoliosUseCase,
+			usecase.NewGetPortfolioUseCase,
 			usecase.NewUpdatePortfolioUseCase,
 			usecase.NewDeletePortfolioUseCase,
+			usecase.NewCreateOperationUseCase,
+			usecase.NewUpdateOperationUseCase,
+			usecase.NewDeleteOperationUseCase,
+			usecase.NewGetOperationUseCase,
 			usecase.NewSyncExternalAssetsUseCase,
 			usecase.NewListExternalAssetProvidersUseCase,
 			usecase.NewSearchExternalAssetsUseCase,

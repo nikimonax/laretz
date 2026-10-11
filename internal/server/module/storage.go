@@ -14,6 +14,7 @@ func StorageModule() fx.Option {
 			repository.NewSqlitePortfolioRepository,
 			repository.NewSqliteAssetRepository,
 			repository.NewSqliteExternalAssetRepository,
+			repository.NewSqliteOperationRepository,
 		),
 	)
 }
