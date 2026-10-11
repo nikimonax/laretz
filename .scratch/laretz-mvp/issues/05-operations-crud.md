@@ -4,11 +4,11 @@
 
 **Blocked by:** 02 (Портфели: CRUD end-to-end + sqlite фундамент), 04 (Импорт Assets: поиск по каталогу — нужен селектор актива).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Форма операции: тип (Buy/Sell), Asset (select), время (`datetime-local`), quantity + total_usd, fee (amount + Asset, nullable), note
-- [ ] JS уравнивает тройку на странице; сервер читает только qty + total_usd; при выключенном JS форма остаётся рабочей
-- [ ] Валидация: время не в будущем, quantity и total_usd > 0; децималы shopspring, в БД TEXT
-- [ ] Таблица операций на `/portfolio/:id`: сортировка по времени desc, независимая пагинация `?ops_page=`
-- [ ] Редактирование с префиллом (GetOperation), удаление — spoofing + `<dialog>`; минус-балансы не валидируются
-- [ ] Команды Create/Update/DeleteOperation + GetOperation (тесты — в 09, единый тестовый проход в конце MVP)
+- [x] Форма операции: тип (Buy/Sell), Asset (select), время (`datetime-local`), quantity + total_usd, fee (amount + Asset, nullable), note
+- [x] JS уравнивает тройку на странице; сервер читает только qty + total_usd; при выключенном JS форма остаётся рабочей
+- [x] Валидация: время не в будущем, quantity и total_usd > 0; децималы shopspring, в БД TEXT
+- [x] Таблица операций на `/portfolio/:id`: сортировка по времени desc, независимая пагинация `?ops_page=`
+- [x] Редактирование с префиллом (GetOperation), удаление — spoofing + `<dialog>`; минус-балансы не валидируются
+- [x] Команды Create/Update/DeleteOperation + GetOperation (тесты — в 09, единый тестовый проход в конце MVP)
