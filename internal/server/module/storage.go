@@ -3,7 +3,6 @@ package module
 import (
 	"go.uber.org/fx"
 
-	"github.com/nikimonax/laretz/internal/impl/handler"
 	"github.com/nikimonax/laretz/internal/impl/repository"
 )
 
@@ -13,7 +12,8 @@ func StorageModule() fx.Option {
 		"storage",
 		fx.Provide(
 			repository.NewSqlitePortfolioRepository,
-			handler.NewSqliteSyncExternalAssetsCommandHandler,
+			repository.NewSqliteAssetRepository,
+			repository.NewSqliteExternalAssetRepository,
 		),
 	)
 }
