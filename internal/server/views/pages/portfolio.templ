@@ -17,6 +17,7 @@ const (
 
 type PortfolioData struct {
 	Portfolio  domain.Portfolio
+	Positions  []domain.Position
 	Operations []domain.Operation
 	OpsPage    int
 	OpsPages   int
@@ -124,10 +125,32 @@ templ Portfolio(data PortfolioData) {
 				<h2>Chart placeholder</h2>
 				<p>The portfolio value chart will be rendered here.</p>
 			</article>
-			<article class="empty-state">
-				<h2>Positions placeholder</h2>
-				<p>Positions with balances and current prices will be listed here.</p>
-			</article>
+			<h2>Positions</h2>
+			if len(data.Positions) == 0 {
+				<article class="empty-state">
+					<h3>No open positions</h3>
+					<p>Assets with a non-zero balance appear here; closed positions remain visible in operations.</p>
+				</article>
+			} else {
+				<table class="data-table">
+					<thead>
+						<tr>
+							<th>Asset</th>
+							<th>Balance</th>
+							<th>Current price</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, position := range data.Positions {
+							<tr>
+								<td><strong>{ position.Asset.Symbol }</strong></td>
+								<td>{ position.Balance.String() }</td>
+								<td><span class="meta">No price</span></td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
 			<h2>Operations</h2>
 			if len(data.Operations) == 0 {
 				<article class="empty-state">

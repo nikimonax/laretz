@@ -41,6 +41,7 @@ func providePortfolioData(
 		}
 
 		data.Portfolio = detail.Portfolio
+		data.Positions = detail.Positions
 		data.Operations = detail.Operations.Items
 		data.OpsPage = detail.Operations.Page
 		data.OpsPages = detail.Operations.Pages
