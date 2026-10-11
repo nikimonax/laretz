@@ -15,6 +15,7 @@ type Facade struct {
 	logger  logr.Logger
 
 	providers ExternalAssetProviderRegistry
+	quotes    QuoteFeedRegistry
 }
 
 type BoundFacade struct {
@@ -54,12 +55,18 @@ func (app *BoundFacade) RegisterAssetProvider(provider plugin.AssetProvider) err
 	return app.providers.Register(app.pluginID, NewExternalAssetProviderAdapter(provider, app.pluginID))
 }
 
+// RegisterQuoteProvider implements [plugin.App].
+func (app *BoundFacade) RegisterQuoteProvider(feed plugin.QuoteProvider) error {
+	return app.quotes.Register(app.pluginID, NewQuoteFeedAdapter(feed, app.pluginID))
+}
+
 var _ plugin.App = (*BoundFacade)(nil)
 
 func NewFacade(
 	configs map[PluginID]Unmarshable,
 	logger logr.Logger,
 	providers ExternalAssetProviderRegistry,
+	quotes QuoteFeedRegistry,
 ) *Facade {
-	return &Facade{configs: configs, logger: logger, providers: providers}
+	return &Facade{configs: configs, logger: logger, providers: providers, quotes: quotes}
 }
