@@ -1,0 +1,18 @@
+template: matryer
+packages:
+  github.com/nikimonax/laretz/internal/app/interfaces:
+    config:
+      dir: internal/testing/mocks
+      pkgname: mocks
+      filename: mocks.go
+      structname: "Moq{{.InterfaceName}}"
+    interfaces:
+      ExternalAssetProvider:
+      ExternalAssetProviderRegistry:
+      AssetRepository:
+      ExternalAssetRepository:
+      OperationRepository:
+      PortfolioRepository:
+      QuoteFeed:
+      QuoteFeedRegistry:
+      QuoteRepository:
