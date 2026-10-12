@@ -12,7 +12,9 @@ jobs:
     container: golang:1.26
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download statictest binary
         uses: robinraju/release-downloader@v1.8
@@ -30,4 +32,4 @@ jobs:
 
       - name: Run statictest
         run: |
-          go vet -vettool=$(which statictest) $(go list ./... | grep -vE "internal/server/views")
+          go vet -buildvcs=false -vettool=$(which statictest) $(go list ./... | grep -vE "internal/server/views")
