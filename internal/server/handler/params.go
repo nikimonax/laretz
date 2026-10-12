@@ -20,7 +20,7 @@ func parsePage(r *http.Request, name string) int {
 }
 
 func renderNotFoundPage(logger logr.Logger, w http.ResponseWriter, r *http.Request) {
-	if err := renderer.NotFound().Render(r.Context(), w); err != nil {
+	if err := renderer.NotFound().WithStatus(http.StatusNotFound).Render(r.Context(), w); err != nil {
 		logger.Error(err, "render")
 	}
 }

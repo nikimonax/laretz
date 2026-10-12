@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-logr/logr"
 
@@ -44,8 +46,8 @@ func New(
 	homeRenderer := renderer.Home(portfolioList)
 	assetsRenderer := renderer.Assets(assetsList, externalAssetsCount, providersList)
 
-	notFoundHandler := NewPageHandler(logger, renderer.NotFound())
-	methodNotAllowedHandler := NewPageHandler(logger, renderer.MethodNotAllowed())
+	notFoundHandler := NewPageHandler(logger, renderer.NotFound().WithStatus(http.StatusNotFound))
+	methodNotAllowedHandler := NewPageHandler(logger, renderer.MethodNotAllowed().WithStatus(http.StatusMethodNotAllowed))
 
 	homeHandler := NewPageHandler(logger, homeRenderer)
 	assetsHandler := NewPageHandler(logger, assetsRenderer)

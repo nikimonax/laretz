@@ -8,6 +8,15 @@ import (
 type ResponseRenderer[PageData any] struct {
 	renderer Renderer[PageData]
 	provider Provider[PageData]
+	status   int
+}
+
+// WithStatus returns a copy of the renderer that responds with the given
+// HTTP status code instead of 200.
+func (rr *ResponseRenderer[PageData]) WithStatus(status int) *ResponseRenderer[PageData] {
+	updated := *rr
+	updated.status = status
+	return &updated
 }
 
 func (rr *ResponseRenderer[PageData]) Render(
@@ -21,8 +30,14 @@ func (rr *ResponseRenderer[PageData]) Render(
 		mutate(&data)
 	}
 
+	status := http.StatusOK
+
+	if rr.status != 0 {
+		status = rr.status
+	}
+
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	writer.WriteHeader(http.StatusOK)
+	writer.WriteHeader(status)
 	return rr.renderer.Render(ctx, writer, data)
 }
 
