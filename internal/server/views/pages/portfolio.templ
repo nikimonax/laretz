@@ -17,7 +17,8 @@ const (
 
 type PortfolioData struct {
 	Portfolio  domain.Portfolio
-	Positions  []domain.Position
+	Total      domain.Value
+	Positions  []domain.ValuedPosition
 	Operations []domain.Operation
 	OpsPage    int
 	OpsPages   int
@@ -125,9 +126,22 @@ templ Portfolio(data PortfolioData) {
 			@components.Alert(data.Error.Message)
 		}
 		if data.Portfolio.ID != 0 {
-			<article class="empty-state">
-				<h2>Chart placeholder</h2>
-				<p>The portfolio value chart will be rendered here.</p>
+			<article class="chart-card">
+				<header class="chart-head">
+					<h2>Value</h2>
+					<p class="chart-total">
+						<strong>{ money(data.Total.Amount) }</strong> USD
+						if data.Total.Stale {
+							<span class="badge">Not current</span>
+						}
+						if data.Total.MissingPrices {
+							<span class="badge">Some assets have no price</span>
+						}
+					</p>
+				</header>
+				<div id="portfolio-chart" class="chart" data-chart={ fmt.Sprintf("/api/portfolio/%d/chart", data.Portfolio.ID) }></div>
+				<p id="portfolio-chart-empty" class="meta" hidden>No chart data yet — fetch quotes first.</p>
+				<p id="portfolio-chart-note" class="meta" hidden>Some hours exclude assets without price.</p>
 			</article>
 			<h2>Positions</h2>
 			if len(data.Positions) == 0 {
@@ -142,6 +156,7 @@ templ Portfolio(data PortfolioData) {
 							<th>Asset</th>
 							<th>Balance</th>
 							<th>Current price</th>
+							<th>Value</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -149,7 +164,24 @@ templ Portfolio(data PortfolioData) {
 							<tr>
 								<td><strong>{ position.Asset.Symbol }</strong></td>
 								<td>{ position.Balance.String() }</td>
-								<td><span class="meta">No price</span></td>
+								<td>
+									if position.Priced {
+										{ money(position.PriceUSD) }
+										<span class="meta">as of { position.AsOf.Format("Jan 2, 15:04") } UTC</span>
+										if position.Stale {
+											<span class="badge">Not current</span>
+										}
+									} else {
+										<span class="meta">No price</span>
+									}
+								</td>
+								<td>
+									if position.Priced {
+										{ money(position.Value) }
+									} else {
+										<span class="meta">—</span>
+									}
+								</td>
 							</tr>
 						}
 					</tbody>
@@ -279,6 +311,33 @@ templ Portfolio(data PortfolioData) {
 			var qv=num(q.value),pv=num(p.value);
 			if(qv&&pv)t.value=fix(qv*pv);
 			}
+			});
+		</script>
+		<script>
+			document.addEventListener('DOMContentLoaded',function(){
+			var el=document.getElementById('portfolio-chart');
+			if(!el)return;
+			var empty=document.getElementById('portfolio-chart-empty'),note=document.getElementById('portfolio-chart-note');
+			var h=280;
+			var money=function(v){return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})};
+			var axis=function(u,vals){return vals.map(function(v){return '$'+v.toLocaleString('en-US',{notation:'compact',maximumFractionDigits:1})})};
+			var value=function(u,v){return v==null?'':money(v)};
+			fetch(el.dataset.chart).then(function(r){return r.ok?r.json():null}).then(function(row){
+			if(!row||!row.ts.length){if(empty)empty.hidden=false;return}
+			if(note&&row.missing.some(Boolean))note.hidden=false;
+			var dark=matchMedia('(prefers-color-scheme: dark)').matches;
+			var muted=dark?getComputedStyle(document.documentElement).getPropertyValue('--pico-muted-color').trim():null;
+			var themed=function(a){return muted?Object.assign({stroke:muted,grid:{stroke:'rgba(255,255,255,0.08)'},ticks:{stroke:muted}},a):a};
+			var chart=new uPlot({
+			width:el.clientWidth,height:h,
+			series:[
+			{},
+			{label:'Value',stroke:'#4f46e5',width:2,fill:'rgba(79,70,229,0.07)',value:value}
+			],
+			axes:[themed({}),themed({values:axis})]
+			},[row.ts,row.value],el);
+			window.addEventListener('resize',function(){chart.setSize({width:el.clientWidth,height:h})});
+			}).catch(function(){if(empty)empty.hidden=false});
 			});
 		</script>
 	}

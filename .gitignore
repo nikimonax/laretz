@@ -1,6 +1,8 @@
 .agents
 .vscode
 
+.playwright-mcp
+
 bin/*
 
 config.yaml

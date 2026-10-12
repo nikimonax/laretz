@@ -333,6 +333,59 @@ dialog p[role="alert"] {
   margin-bottom: 0;
 }
 
+/* badges */
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 999px;
+  color: var(--pico-muted-color);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* chart */
+
+.chart-card .chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chart-card .chart-head h2 {
+  margin-bottom: 0;
+}
+
+.chart-card .chart-total {
+  margin-bottom: 0;
+}
+
+.chart-card .chart {
+  margin-block: 1rem 0;
+}
+
+.chart-card .uplot {
+  max-width: 100%;
+}
+
+.chart-card .u-legend {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.chart-card .u-legend .u-value {
+  color: var(--pico-muted-color);
+}
+
+.chart-card .meta {
+  margin-bottom: 0;
+}
+
 /* dialogs */
 
 dialog article footer {

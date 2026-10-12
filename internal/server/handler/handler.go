@@ -16,6 +16,7 @@ func New(
 	providersList *usecase.ListExternalAssetProvidersUseCase,
 	portfolioList *usecase.ListPortfoliosUseCase,
 	portfolioGet *usecase.GetPortfolioUseCase,
+	portfolioChart *usecase.GetPortfolioChartUseCase,
 	portfolioCreate *usecase.CreatePortfolioUseCase,
 	portfolioUpdate *usecase.UpdatePortfolioUseCase,
 	portfolioDelele *usecase.DeletePortfolioUseCase,
@@ -50,6 +51,7 @@ func New(
 	assetsHandler := NewPageHandler(logger, assetsRenderer)
 	assetSearchHandler := NewAssetSearchHandler(logger, externalAssetsSearch, assetGet, externalAssetsCount)
 	portfolioGetHandler := NewPortfolioGetHandler(logger, portfolioGet, assetsList)
+	portfolioChartHandler := NewPortfolioChartHandler(logger, portfolioChart)
 	portfolioCreateHandler := NewCreatePortfolioHandler(logger, homeRenderer, portfolioCreate)
 	portfolioUpdateHandler := NewUpdatePortfolioHandler(logger, homeRenderer, portfolioUpdate)
 	portfolioDeleleHandler := NewDeletePortfolioHandler(logger, homeRenderer, portfolioDelele)
@@ -78,6 +80,8 @@ func New(
 	router.Post("/assets/{id}", updateAssetHandler.ServeHTTP)
 	router.Delete("/assets/{id}", deleteAssetHandler.ServeHTTP)
 	router.Post("/quotes/fetch", fetchQuotesHandler.ServeHTTP)
+
+	router.Get("/api/portfolio/{id}/chart", portfolioChartHandler.ServeHTTP)
 
 	router.NotFound(notFoundHandler.ServeHTTP)
 	router.MethodNotAllowed(methodNotAllowedHandler.ServeHTTP)

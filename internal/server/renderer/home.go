@@ -19,12 +19,12 @@ func provideHomeData(
 	return func(ctx context.Context) pages.HomeData {
 		var data pages.HomeData
 
-		portfolios, err := portfolioList.Execute(ctx)
+		summaries, err := portfolioList.Execute(ctx)
 
 		if err != nil {
 			data.Error = views.Error{Message: messageInternalError}
 		} else {
-			data.Portfolios = portfolios
+			data.Portfolios = summaries
 		}
 
 		return data
