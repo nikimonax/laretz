@@ -12,15 +12,12 @@ import (
 
 func init() {
 	yaml.RegisterCustomUnmarshaler(unmarshalZapcoreLevel)
-	yaml.RegisterCustomMarshaler(marshalZapcoreLevel)
-
 	yaml.RegisterCustomUnmarshaler(unmarshalZapEnv)
-	yaml.RegisterCustomMarshaler(marshalZapEnv)
 }
 
 var (
 	configMarshal   = yaml.Marshal
-	configUnmarshal = yaml.Unmarshal
+	configUnmarshal = yaml.UnmarshalWithOptions
 )
 
 type RawMessage struct {
@@ -44,20 +41,12 @@ func unmarshalZapcoreLevel(level *zapcore.Level, data []byte) (err error) {
 	return err
 }
 
-func marshalZapcoreLevel(level *zapcore.Level) ([]byte, error) {
-	return []byte(level.String()), nil
-}
-
 func unmarshalZapEnv(env *logging.LogEnv, data []byte) (err error) {
 	*env, err = logging.EnvFromString(strings.TrimSpace(string(data)))
 	if err != nil {
 		err = fmt.Errorf("%w: %w", ErrConfig, err)
 	}
 	return err
-}
-
-func marshalZapEnv(env *logging.LogEnv) ([]byte, error) {
-	return []byte(env.String()), nil
 }
 
 func EncodeConfig(cfg *Config) ([]byte, error) {
@@ -67,8 +56,8 @@ func EncodeConfig(cfg *Config) ([]byte, error) {
 func DecodeConfig(content []byte) (*Config, error) {
 	cfg := new(Config)
 
-	if err := configUnmarshal(content, cfg); err != nil {
-		return nil, err
+	if err := configUnmarshal(content, cfg, yaml.DisallowUnknownField()); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrConfig, err)
 	}
 
 	return cfg, nil

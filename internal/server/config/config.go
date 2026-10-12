@@ -20,8 +20,8 @@ const (
 )
 
 type ServerConfig struct {
-	Port        uint16
-	Host        string
+	Port        uint16 `validate:"required"`
+	Host        string `validate:"required"`
 	OpenBrowser bool
 }
 
@@ -34,7 +34,7 @@ func (cfg ServerConfig) BrowserOpenURL() string {
 }
 
 type DataConfig struct {
-	Dir string
+	Dir string `validate:"required"`
 }
 
 func (cfg DataConfig) DatabaseFile() string {

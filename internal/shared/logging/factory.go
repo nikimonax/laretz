@@ -30,6 +30,10 @@ func (env LogEnv) String() string {
 	}
 }
 
+func (env LogEnv) MarshalText() ([]byte, error) {
+	return []byte(env.String()), nil
+}
+
 func EnvFromString(env string) (LogEnv, error) {
 	switch env {
 	case "dev":

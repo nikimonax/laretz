@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/urfave/cli/v3"
+	"go.uber.org/fx"
 
 	"github.com/nikimonax/laretz/internal/server"
 	"github.com/nikimonax/laretz/internal/server/config"
@@ -54,9 +55,19 @@ func HandleError(err error) {
 }
 
 func actionRunApp(_ context.Context, cmd *cli.Command) error {
-	// load .env
-	if err := godotenv.Load(); err != nil {
+	app, err := prepareApp(cmd)
+
+	if err != nil {
 		return err
+	}
+
+	app.Run()
+	return nil
+}
+
+func prepareApp(cmd *cli.Command) (*fx.App, error) {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		return nil, err
 	}
 
 	// determine config path
@@ -74,7 +85,7 @@ func actionRunApp(_ context.Context, cmd *cli.Command) error {
 	cfg, err := config.EnsureConfig(configPath)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if cmd.Bool("open") {
@@ -84,13 +95,12 @@ func actionRunApp(_ context.Context, cmd *cli.Command) error {
 	app, err := server.New(cfg)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := app.Err(); err != nil {
-		return err
+		return nil, err
 	}
 
-	app.Run()
-	return nil
+	return app, nil
 }
