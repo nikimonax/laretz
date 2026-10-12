@@ -18,6 +18,12 @@ all: build
 run: $(BIN_DIR)/laretz
 	./$< $(EXTRA_ARGS)
 
+.PHONY: gen generate
+gen generate:
+	sqlc generate
+	templ generate
+	mockery
+
 .PHONY: build
 build: $(BIN_DIR)/laretz
 
@@ -31,7 +37,7 @@ fmt format: _check_golangci_lint_cmd
 
 .PHONY: test
 test:
-	go test $(EXTRA_ARGS) $$(go list ./... | grep -v internal/testing)
+	go test $(EXTRA_ARGS) $$(go list ./... | grep -vE "internal/testing|database/generated")
 
 .PHONY: cover
 cover: $(COV_FILE)
@@ -59,13 +65,5 @@ _check_golangci_lint_cmd:
 	@if ! command -v golangci-lint $&> /dev/null; then \
 		echo "[ERROR]: command 'golangci-lint' not found"; \
 		echo "install using \"go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest\""; \
-		exit 1; \
-	fi
-
-.PHONY: _check_migrate_cmd 
-_check_migrate_cmd:
-	@if ! command -v migrate $&> /dev/null; then \
-		echo "[ERROR]: command 'migrate' not found"; \
-		echo "install using \"go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest\""; \
 		exit 1; \
 	fi
