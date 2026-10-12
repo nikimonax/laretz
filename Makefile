@@ -39,6 +39,10 @@ fmt format: _check_golangci_lint_cmd
 test:
 	go test $(EXTRA_ARGS) $$(go list ./... | grep -vE "internal/testing|database/generated")
 
+.PHONY: statictest
+statictest: $(BIN_DIR)/statictest
+	go vet -vettool=$< $$(go list ./... | grep -vE "internal/server/views")
+
 .PHONY: cover
 cover: $(COV_FILE)
 	sed -i '/internal\/testing/d' $(COV_FILE) && \
@@ -59,6 +63,8 @@ $(COV_FILE): test
 $(BIN_DIR)/laretz: $(BIN_DIR)/%: cmd/% .FORCE
 	go build -o $@ ./$<
 
+$(BIN_DIR)/statictest: .FORCE
+	cd tools/go-autotests && go build -o ../../$@ ./cmd/$(@F)
 
 .PHONY: _check_golangci_lint_cmd
 _check_golangci_lint_cmd:
