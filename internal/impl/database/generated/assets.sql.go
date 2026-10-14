@@ -231,6 +231,79 @@ func (q *Queries) ListAssets(ctx context.Context) ([]ListAssetsRow, error) {
 	return items, nil
 }
 
+const listPortfolioAssets = `-- name: ListPortfolioAssets :many
+SELECT
+    a.id,
+    a.symbol,
+    a.name,
+    a.created_at,
+    a.updated_at,
+    ea.id AS external_asset_id,
+    ea.source,
+    ea.external_id,
+    ea.symbol AS external_symbol,
+    ea.name AS external_name,
+    ea.synced_at
+FROM asset a
+JOIN asset_link l ON l.asset_id = a.id AND l.is_primary = 1
+JOIN external_asset ea ON ea.id = l.external_asset_id
+WHERE EXISTS (
+    SELECT 1
+    FROM operation o
+    WHERE o.asset_id = a.id AND o.portfolio_id = ?
+)
+ORDER BY a.symbol, a.id
+`
+
+type ListPortfolioAssetsRow struct {
+	ID              int64
+	Symbol          string
+	Name            string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	ExternalAssetID int64
+	Source          string
+	ExternalID      string
+	ExternalSymbol  string
+	ExternalName    string
+	SyncedAt        time.Time
+}
+
+func (q *Queries) ListPortfolioAssets(ctx context.Context, portfolioID int64) ([]ListPortfolioAssetsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPortfolioAssets, portfolioID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPortfolioAssetsRow
+	for rows.Next() {
+		var i ListPortfolioAssetsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Symbol,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ExternalAssetID,
+			&i.Source,
+			&i.ExternalID,
+			&i.ExternalSymbol,
+			&i.ExternalName,
+			&i.SyncedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateAssetFields = `-- name: UpdateAssetFields :execrows
 UPDATE asset
 SET symbol = ?, name = ?

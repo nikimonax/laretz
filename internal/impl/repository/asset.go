@@ -49,6 +49,23 @@ func (repo *SqliteAssetRepository) List(ctx context.Context) ([]domain.Asset, er
 	return assets, nil
 }
 
+// ListByPortfolioID implements [interfaces.AssetRepository].
+func (repo *SqliteAssetRepository) ListByPortfolioID(ctx context.Context, portfolioID domain.PortfolioID) ([]domain.Asset, error) {
+	rows, err := repo.queries.ListPortfolioAssets(ctx, portfolioID)
+
+	if err != nil {
+		return nil, fmt.Errorf("list assets of portfolio %d: %w", portfolioID, err)
+	}
+
+	assets := make([]domain.Asset, 0, len(rows))
+
+	for _, row := range rows {
+		assets = append(assets, toDomainAsset(generated.GetAssetRow(row)))
+	}
+
+	return assets, nil
+}
+
 // Create implements [interfaces.AssetRepository].
 func (repo *SqliteAssetRepository) Create(
 	ctx context.Context,

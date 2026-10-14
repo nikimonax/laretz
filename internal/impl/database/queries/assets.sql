@@ -58,6 +58,29 @@ JOIN asset_link l ON l.asset_id = a.id AND l.is_primary = 1
 JOIN external_asset ea ON ea.id = l.external_asset_id
 ORDER BY a.symbol, a.id;
 
+-- name: ListPortfolioAssets :many
+SELECT
+    a.id,
+    a.symbol,
+    a.name,
+    a.created_at,
+    a.updated_at,
+    ea.id AS external_asset_id,
+    ea.source,
+    ea.external_id,
+    ea.symbol AS external_symbol,
+    ea.name AS external_name,
+    ea.synced_at
+FROM asset a
+JOIN asset_link l ON l.asset_id = a.id AND l.is_primary = 1
+JOIN external_asset ea ON ea.id = l.external_asset_id
+WHERE EXISTS (
+    SELECT 1
+    FROM operation o
+    WHERE o.asset_id = a.id AND o.portfolio_id = ?
+)
+ORDER BY a.symbol, a.id;
+
 -- name: UpdateAssetFields :execrows
 UPDATE asset
 SET symbol = ?, name = ?

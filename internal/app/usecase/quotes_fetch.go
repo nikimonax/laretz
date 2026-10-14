@@ -41,7 +41,7 @@ func NewFetchQuotesUseCase(
 }
 
 func (usecase *FetchQuotesUseCase) Execute(ctx context.Context, cmd FetchQuotes) error {
-	assets, err := usecase.assets.List(ctx)
+	assets, err := usecase.assets.ListByPortfolioID(ctx, cmd.PortfolioID)
 
 	if err != nil {
 		return err

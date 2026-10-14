@@ -203,6 +203,9 @@ var _ interfaces.AssetRepository = &MoqAssetRepository{}
 //			ListFunc: func(ctx context.Context) ([]domain.Asset, error) {
 //				panic("mock out the List method")
 //			},
+//			ListByPortfolioIDFunc: func(ctx context.Context, portfolioID domain.PortfolioID) ([]domain.Asset, error) {
+//				panic("mock out the ListByPortfolioID method")
+//			},
 //			RelinkFunc: func(ctx context.Context, id domain.AssetID, externalAssetID domain.ExternalAssetID) error {
 //				panic("mock out the Relink method")
 //			},
@@ -227,6 +230,9 @@ type MoqAssetRepository struct {
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context) ([]domain.Asset, error)
+
+	// ListByPortfolioIDFunc mocks the ListByPortfolioID method.
+	ListByPortfolioIDFunc func(ctx context.Context, portfolioID domain.PortfolioID) ([]domain.Asset, error)
 
 	// RelinkFunc mocks the Relink method.
 	RelinkFunc func(ctx context.Context, id domain.AssetID, externalAssetID domain.ExternalAssetID) error
@@ -266,6 +272,13 @@ type MoqAssetRepository struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
+		// ListByPortfolioID holds details about calls to the ListByPortfolioID method.
+		ListByPortfolioID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// PortfolioID is the portfolioID argument value.
+			PortfolioID domain.PortfolioID
+		}
 		// Relink holds details about calls to the Relink method.
 		Relink []struct {
 			// Ctx is the ctx argument value.
@@ -287,12 +300,13 @@ type MoqAssetRepository struct {
 			Name string
 		}
 	}
-	lockCreate sync.RWMutex
-	lockDelete sync.RWMutex
-	lockGet    sync.RWMutex
-	lockList   sync.RWMutex
-	lockRelink sync.RWMutex
-	lockRename sync.RWMutex
+	lockCreate            sync.RWMutex
+	lockDelete            sync.RWMutex
+	lockGet               sync.RWMutex
+	lockList              sync.RWMutex
+	lockListByPortfolioID sync.RWMutex
+	lockRelink            sync.RWMutex
+	lockRename            sync.RWMutex
 }
 
 // Create calls CreateFunc.
@@ -440,6 +454,42 @@ func (mock *MoqAssetRepository) ListCalls() []struct {
 	mock.lockList.RLock()
 	calls = mock.calls.List
 	mock.lockList.RUnlock()
+	return calls
+}
+
+// ListByPortfolioID calls ListByPortfolioIDFunc.
+func (mock *MoqAssetRepository) ListByPortfolioID(ctx context.Context, portfolioID domain.PortfolioID) ([]domain.Asset, error) {
+	if mock.ListByPortfolioIDFunc == nil {
+		panic("MoqAssetRepository.ListByPortfolioIDFunc: method is nil but AssetRepository.ListByPortfolioID was just called")
+	}
+	callInfo := struct {
+		Ctx         context.Context
+		PortfolioID domain.PortfolioID
+	}{
+		Ctx:         ctx,
+		PortfolioID: portfolioID,
+	}
+	mock.lockListByPortfolioID.Lock()
+	mock.calls.ListByPortfolioID = append(mock.calls.ListByPortfolioID, callInfo)
+	mock.lockListByPortfolioID.Unlock()
+	return mock.ListByPortfolioIDFunc(ctx, portfolioID)
+}
+
+// ListByPortfolioIDCalls gets all the calls that were made to ListByPortfolioID.
+// Check the length with:
+//
+//	len(mockedAssetRepository.ListByPortfolioIDCalls())
+func (mock *MoqAssetRepository) ListByPortfolioIDCalls() []struct {
+	Ctx         context.Context
+	PortfolioID domain.PortfolioID
+} {
+	var calls []struct {
+		Ctx         context.Context
+		PortfolioID domain.PortfolioID
+	}
+	mock.lockListByPortfolioID.RLock()
+	calls = mock.calls.ListByPortfolioID
+	mock.lockListByPortfolioID.RUnlock()
 	return calls
 }
 

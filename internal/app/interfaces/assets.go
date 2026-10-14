@@ -24,6 +24,7 @@ type ExternalAssetProviderRegistry interface {
 type AssetRepository interface {
 	Get(ctx context.Context, id domain.AssetID) (domain.Asset, error)
 	List(ctx context.Context) ([]domain.Asset, error)
+	ListByPortfolioID(ctx context.Context, portfolioID domain.PortfolioID) ([]domain.Asset, error)
 	Create(ctx context.Context, externalAssetID domain.ExternalAssetID, symbol string, name string) (domain.AssetID, error)
 	Rename(ctx context.Context, id domain.AssetID, symbol string, name string) error
 	Relink(ctx context.Context, id domain.AssetID, externalAssetID domain.ExternalAssetID) error

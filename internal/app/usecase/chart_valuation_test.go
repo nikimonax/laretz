@@ -52,7 +52,7 @@ func TestGetPortfolioChartUseCase(t *testing.T) {
 		}
 
 		assets := &mocks.MoqAssetRepository{}
-		assets.ListFunc = func(context.Context) ([]domain.Asset, error) {
+		assets.ListByPortfolioIDFunc = func(context.Context, domain.PortfolioID) ([]domain.Asset, error) {
 			return []domain.Asset{testAsset(1, "BTC", 10)}, nil
 		}
 
@@ -84,7 +84,7 @@ func TestGetPortfolioChartUseCase(t *testing.T) {
 		operations.ListFunc = func(context.Context, domain.PortfolioID) ([]domain.Operation, error) { return nil, nil }
 
 		assets := &mocks.MoqAssetRepository{}
-		assets.ListFunc = func(context.Context) ([]domain.Asset, error) { return nil, nil }
+		assets.ListByPortfolioIDFunc = func(context.Context, domain.PortfolioID) ([]domain.Asset, error) { return nil, nil }
 
 		quotes := &mocks.MoqQuoteRepository{}
 
@@ -132,7 +132,7 @@ func TestFetchQuotesUseCase(t *testing.T) {
 		}
 
 		assets := &mocks.MoqAssetRepository{}
-		assets.ListFunc = func(context.Context) ([]domain.Asset, error) {
+		assets.ListByPortfolioIDFunc = func(context.Context, domain.PortfolioID) ([]domain.Asset, error) {
 			return []domain.Asset{testAsset(1, "BTC", 10)}, nil
 		}
 
@@ -209,7 +209,7 @@ func TestFetchQuotesUseCase(t *testing.T) {
 		}
 
 		assets := &mocks.MoqAssetRepository{}
-		assets.ListFunc = func(context.Context) ([]domain.Asset, error) {
+		assets.ListByPortfolioIDFunc = func(context.Context, domain.PortfolioID) ([]domain.Asset, error) {
 			return []domain.Asset{testAsset(1, "BTC", 0)}, nil
 		}
 
@@ -233,7 +233,7 @@ func TestFetchQuotesUseCase(t *testing.T) {
 		}
 
 		assets := &mocks.MoqAssetRepository{}
-		assets.ListFunc = func(context.Context) ([]domain.Asset, error) { return nil, nil }
+		assets.ListByPortfolioIDFunc = func(context.Context, domain.PortfolioID) ([]domain.Asset, error) { return nil, nil }
 
 		err := usecase.NewFetchQuotesUseCase(portfolios, &mocks.MoqOperationRepository{},
 			assets, &mocks.MoqQuoteRepository{}, &mocks.MoqQuoteFeedRegistry{}).
@@ -266,7 +266,7 @@ func TestGetPortfolioUseCase(t *testing.T) {
 		}
 
 		assets := &mocks.MoqAssetRepository{}
-		assets.ListFunc = func(context.Context) ([]domain.Asset, error) {
+		assets.ListByPortfolioIDFunc = func(context.Context, domain.PortfolioID) ([]domain.Asset, error) {
 			return []domain.Asset{testAsset(1, "BTC", 10)}, nil
 		}
 
@@ -301,7 +301,7 @@ func TestGetPortfolioUseCase(t *testing.T) {
 		}
 
 		assets := &mocks.MoqAssetRepository{}
-		assets.ListFunc = func(context.Context) ([]domain.Asset, error) { return nil, nil }
+		assets.ListByPortfolioIDFunc = func(context.Context, domain.PortfolioID) ([]domain.Asset, error) { return nil, nil }
 
 		detail, err := usecase.NewGetPortfolioUseCase(portfolios, operations, assets, &mocks.MoqQuoteRepository{}).
 			Execute(ctx, usecase.GetPortfolio{ID: 1})

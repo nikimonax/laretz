@@ -48,7 +48,7 @@ func (usecase *GetPortfolioChartUseCase) Execute(ctx context.Context, cmd GetPor
 		return nil, err
 	}
 
-	assets, err := usecase.assets.List(ctx)
+	assets, err := usecase.assets.ListByPortfolioID(ctx, cmd.ID)
 
 	if err != nil {
 		return nil, err

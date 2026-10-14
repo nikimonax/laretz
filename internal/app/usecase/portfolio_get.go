@@ -63,7 +63,7 @@ func (usecase *GetPortfolioUseCase) Execute(ctx context.Context, cmd GetPortfoli
 		return PortfolioDetail{}, err
 	}
 
-	assets, err := usecase.assets.List(ctx)
+	assets, err := usecase.assets.ListByPortfolioID(ctx, portfolio.ID)
 
 	if err != nil {
 		return PortfolioDetail{}, err
