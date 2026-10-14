@@ -33,6 +33,11 @@ func (cfg ServerConfig) BrowserOpenURL() string {
 	return "http://" + cfg.Listen() + "/"
 }
 
+type LogConfig struct {
+	Env   logging.LogEnv
+	Level zapcore.Level
+}
+
 type DataConfig struct {
 	Dir string `validate:"required"`
 }
@@ -41,9 +46,8 @@ func (cfg DataConfig) DatabaseFile() string {
 	return filepath.Join(cfg.Dir, AppName+".db")
 }
 
-type LogConfig struct {
-	Env   logging.LogEnv
-	Level zapcore.Level
+type MetaConfig struct {
+	Source string
 }
 
 type Config struct {
@@ -51,6 +55,7 @@ type Config struct {
 	Log     LogConfig
 	Data    DataConfig
 	Plugins map[plugin.PluginID]RawMessage
+	Meta    MetaConfig `yaml:"-"`
 }
 
 func DefaultAppDataDir() (string, error) {
@@ -117,6 +122,8 @@ func ReadConfig(configPath string) (*Config, error) {
 		return nil, err
 	}
 
+	cfg.Meta.Source = configPath
+
 	return cfg, nil
 }
 
@@ -155,6 +162,8 @@ func EnsureConfig(configPath string) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		cfg.Meta.Source = configPath
 
 		err = WriteConfig(cfg, configPath)
 	}

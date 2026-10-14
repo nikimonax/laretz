@@ -23,6 +23,7 @@ func New(cfg *config.Config) (*fx.App, error) {
 		module.StorageModule(),
 		module.UseCaseModule(),
 		module.HTTPModule(),
+		module.ConfigModule(),
 		module.BrowserModule(),
 		fx.WithLogger(logging.NewFxLogger),
 	), nil
