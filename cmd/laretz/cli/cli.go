@@ -77,8 +77,14 @@ func prepareApp(cmd *cli.Command) (*fx.App, error) {
 		configPath = os.Getenv("LARETZ_CONFIG")
 	}
 
+	var err error
+
 	if configPath == "" {
-		configPath = config.DefaultConfigPath()
+		configPath, err = config.DefaultConfigPath()
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	// read config

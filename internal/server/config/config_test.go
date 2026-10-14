@@ -47,13 +47,17 @@ plugins:
 }
 
 func TestConfigRoundTrip(t *testing.T) {
-	encoded, err := config.EncodeConfig(config.DefaultConfig())
+	cfg, err := config.DefaultConfig()
+
+	require.NoError(t, err)
+
+	encoded, err := config.EncodeConfig(cfg)
 
 	require.NoError(t, err)
 	assert.Contains(t, string(encoded), "env: dev", "env must serialize as a string, not a number")
 	assert.Contains(t, string(encoded), "level: info")
 
-	cfg, err := config.DecodeConfig(encoded)
+	cfg, err = config.DecodeConfig(encoded)
 
 	require.NoError(t, err, "config written by first run must be readable by second run")
 	assert.Equal(t, logging.EnvDev, cfg.Log.Env)
@@ -63,23 +67,33 @@ func TestConfigRoundTrip(t *testing.T) {
 
 func TestValidateConfig(t *testing.T) {
 	t.Run("default config is valid", func(t *testing.T) {
-		assert.NoError(t, config.ValidateConfig(config.DefaultConfig()))
+		cfg, err := config.DefaultConfig()
+
+		require.NoError(t, err)
+
+		assert.NoError(t, config.ValidateConfig(cfg))
 	})
 
 	t.Run("empty host is invalid", func(t *testing.T) {
-		broken := config.DefaultConfig()
-		broken.Server.Host = ""
+		cfg, err := config.DefaultConfig()
 
-		err := config.ValidateConfig(broken)
+		require.NoError(t, err)
+
+		cfg.Server.Host = ""
+
+		err = config.ValidateConfig(cfg)
 
 		require.ErrorIs(t, err, config.ErrConfig)
 	})
 
 	t.Run("empty data dir is invalid", func(t *testing.T) {
-		broken := config.DefaultConfig()
-		broken.Data.Dir = ""
+		cfg, err := config.DefaultConfig()
 
-		err := config.ValidateConfig(broken)
+		require.NoError(t, err)
+
+		cfg.Data.Dir = ""
+
+		err = config.ValidateConfig(cfg)
 
 		require.ErrorIs(t, err, config.ErrConfig)
 	})

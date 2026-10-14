@@ -53,21 +53,33 @@ type Config struct {
 	Plugins map[plugin.PluginID]RawMessage
 }
 
-func DefaultAppDataDir() string {
+func DefaultAppDataDir() (string, error) {
 	configDir, err := os.UserConfigDir()
 
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return filepath.Join(configDir, AppName)
+	return filepath.Join(configDir, AppName), nil
 }
 
-func DefaultConfigPath() string {
-	return filepath.Join(DefaultAppDataDir(), "config.yaml")
+func DefaultConfigPath() (string, error) {
+	appData, err := DefaultAppDataDir()
+
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(appData, "config.yaml"), nil
 }
 
-func DefaultConfig() *Config {
+func DefaultConfig() (*Config, error) {
+	appData, err := DefaultAppDataDir()
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		Server: ServerConfig{
 			Port:        DefaultServerPort,
@@ -75,9 +87,9 @@ func DefaultConfig() *Config {
 			OpenBrowser: false,
 		},
 		Data: DataConfig{
-			Dir: DefaultAppDataDir(),
+			Dir: appData,
 		},
-	}
+	}, nil
 }
 
 func ReadConfig(configPath string) (*Config, error) {
@@ -138,7 +150,12 @@ func EnsureConfig(configPath string) (*Config, error) {
 	cfg, err := ReadConfig(configPath)
 
 	if os.IsNotExist(err) {
-		cfg = DefaultConfig()
+		cfg, err = DefaultConfig()
+
+		if err != nil {
+			return nil, err
+		}
+
 		err = WriteConfig(cfg, configPath)
 	}
 
