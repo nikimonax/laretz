@@ -49,7 +49,6 @@ type App interface {
 	Logger() logr.Logger
 
 	GetConfig(cfg any) error
-	SetConfig(cfg any) error
 
 	RegisterAssetProvider(provider AssetProvider) error
 	RegisterQuoteProvider(provider QuoteProvider) error

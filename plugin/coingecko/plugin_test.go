@@ -37,8 +37,6 @@ func (app *fakeApp) GetConfig(cfg any) error {
 	return yaml.Unmarshal([]byte(app.config), cfg)
 }
 
-func (app *fakeApp) SetConfig(any) error { return nil }
-
 func (app *fakeApp) RegisterAssetProvider(provider plugin.AssetProvider) error {
 	app.assets = provider
 	return nil

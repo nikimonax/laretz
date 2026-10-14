@@ -44,12 +44,6 @@ func (app *BoundFacade) GetConfig(cfg any) error {
 	return nil
 }
 
-// SetConfig implements [plugin.App].
-func (app *BoundFacade) SetConfig(_ any) error {
-	// TODO
-	panic("unimplemented")
-}
-
 // RegisterAssetProvider implements [plugin.App].
 func (app *BoundFacade) RegisterAssetProvider(provider plugin.AssetProvider) error {
 	return app.providers.Register(app.pluginID, NewExternalAssetProviderAdapter(provider, app.pluginID))
@@ -68,5 +62,10 @@ func NewFacade(
 	providers ExternalAssetProviderRegistry,
 	quotes QuoteFeedRegistry,
 ) *Facade {
-	return &Facade{configs: configs, logger: logger, providers: providers, quotes: quotes}
+	return &Facade{
+		configs:   configs,
+		logger:    logger,
+		providers: providers,
+		quotes:    quotes,
+	}
 }
