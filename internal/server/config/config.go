@@ -103,13 +103,6 @@ func ReadConfig(configPath string) (*Config, error) {
 	}
 
 	configPath = filepath.Clean(configPath)
-
-	_, err := os.Stat(configPath)
-
-	if err != nil {
-		return nil, err
-	}
-
 	content, err := os.ReadFile(configPath)
 
 	if err != nil {
