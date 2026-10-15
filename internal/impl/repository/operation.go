@@ -31,7 +31,7 @@ func (repo *SqliteOperationRepository) Get(ctx context.Context, id domain.Operat
 	return toDomainOperation(row), nil
 }
 
-// ListAll implements [interfaces.OperationRepository].
+// List implements [interfaces.OperationRepository].
 func (repo *SqliteOperationRepository) List(ctx context.Context, portfolioID domain.PortfolioID) ([]domain.Operation, error) {
 	rows, err := repo.queries.ListPortfolioOperations(ctx, portfolioID)
 
@@ -48,7 +48,7 @@ func (repo *SqliteOperationRepository) List(ctx context.Context, portfolioID dom
 	return operations, nil
 }
 
-// List implements [interfaces.OperationRepository].
+// ListPaged implements [interfaces.OperationRepository].
 func (repo *SqliteOperationRepository) ListPaged(ctx context.Context, portfolioID domain.PortfolioID, limit, offset int) ([]domain.Operation, error) {
 	rows, err := repo.queries.ListPortfolioOperationsPaged(ctx, generated.ListPortfolioOperationsPagedParams{
 		PortfolioID: portfolioID,
