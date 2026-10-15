@@ -42,11 +42,7 @@ func NewRegistry() *Registry {
 	return &Registry{plugins: make(map[PluginID]plugin.Plugin)}
 }
 
-var registry *Registry
-
-func init() {
-	registry = NewRegistry()
-}
+var registry = NewRegistry()
 
 func DefaultRegistry() *Registry {
 	return registry
