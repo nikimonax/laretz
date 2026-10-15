@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"context"
+	"errors"
 	"net/http"
 )
 
@@ -24,7 +25,7 @@ func (rr *ResponseRenderer[PageData]) Render(
 	writer http.ResponseWriter,
 	mutates ...Mutate[PageData],
 ) error {
-	data := rr.provider.Provide(ctx)
+	data, provideErr := rr.provider.Provide(ctx)
 
 	for _, mutate := range mutates {
 		mutate(&data)
@@ -38,7 +39,9 @@ func (rr *ResponseRenderer[PageData]) Render(
 
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 	writer.WriteHeader(status)
-	return rr.renderer.Render(ctx, writer, data)
+	renderErr := rr.renderer.Render(ctx, writer, data)
+
+	return errors.Join(provideErr, renderErr)
 }
 
 func NewResponseRenderer[PageData any](

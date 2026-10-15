@@ -41,6 +41,8 @@ func (handler *CreatePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	cmd := usecase.CreatePorfolio{Name: portfolioName}
 
 	if _, err := handler.portfolioCreate.Execute(r.Context(), cmd); err != nil {
+		handler.logger.Error(err, "create portfolio")
+
 		mutate := renderer.HomeWithError(messageSomethingWentWrong, pages.DialogCreatePortfolio)
 		if err := handler.responseRenderer.Render(r.Context(), w, mutate); err != nil {
 			handler.logger.Error(err, "render")

@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/nikimonax/laretz/internal/app/usecase"
@@ -17,29 +18,31 @@ func provideAssetsData(
 	assetsList *usecase.ListAssetsUseCase,
 	externalAssetsCount *usecase.CountExternalAssetsUseCase,
 	providersList *usecase.ListExternalAssetProvidersUseCase,
-) func(ctx context.Context) pages.AssetsData {
-	return func(ctx context.Context) pages.AssetsData {
+) func(ctx context.Context) (pages.AssetsData, error) {
+	return func(ctx context.Context) (pages.AssetsData, error) {
 		var data pages.AssetsData
 
 		assets, err := assetsList.Execute(ctx)
 
 		if err != nil {
-			data.Error = views.Error{Message: messageInternalError}
-		} else {
-			data.Assets = assets
+			data.Error = views.Error{Message: messageSomethingWentWrong}
+			return data, fmt.Errorf("list assets: %w", err)
 		}
+
+		data.Assets = assets
 
 		count, err := externalAssetsCount.Execute(ctx)
 
 		if err != nil {
-			data.Error = views.Error{Message: messageInternalError}
-		} else {
-			data.CatalogEmpty = count == 0
+			data.Error = views.Error{Message: messageSomethingWentWrong}
+			return data, fmt.Errorf("count external assets: %w", err)
 		}
+
+		data.CatalogEmpty = count == 0
 
 		data.Providers = providersList.Execute(ctx)
 
-		return data
+		return data, nil
 	}
 }
 

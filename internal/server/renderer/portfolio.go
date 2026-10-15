@@ -3,6 +3,7 @@ package renderer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/nikimonax/laretz/internal/app"
@@ -21,8 +22,8 @@ func providePortfolioData(
 	assetsList *usecase.ListAssetsUseCase,
 	portfolioID domain.PortfolioID,
 	opsPage int,
-) func(ctx context.Context) pages.PortfolioData {
-	return func(ctx context.Context) pages.PortfolioData {
+) func(ctx context.Context) (pages.PortfolioData, error) {
+	return func(ctx context.Context) (pages.PortfolioData, error) {
 		var data pages.PortfolioData
 
 		detail, err := portfolioGet.Execute(ctx, usecase.GetPortfolio{
@@ -31,13 +32,14 @@ func providePortfolioData(
 		})
 
 		if err != nil {
+			message := messageSomethingWentWrong
+
 			if errors.Is(err, app.ErrEntityNotFound) {
-				data.Error = views.Error{Message: "Portfolio not found."}
-				return data
+				message = "Portfolio not found."
 			}
 
-			data.Error = views.Error{Message: messageInternalError}
-			return data
+			data.Error = views.Error{Message: message}
+			return data, fmt.Errorf("get portfolio %d: %w", portfolioID, err)
 		}
 
 		data.Portfolio = detail.Portfolio
@@ -50,13 +52,13 @@ func providePortfolioData(
 		assets, err := assetsList.Execute(ctx)
 
 		if err != nil {
-			data.Error = views.Error{Message: messageInternalError}
-			return data
+			data.Error = views.Error{Message: messageSomethingWentWrong}
+			return data, fmt.Errorf("list assets: %w", err)
 		}
 
 		data.Assets = assets
 
-		return data
+		return data, nil
 	}
 }
 

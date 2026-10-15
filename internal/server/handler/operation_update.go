@@ -51,6 +51,8 @@ func (handler *UpdateOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	update := usecase.UpdateOperation{CreateOperation: cmd, ID: domain.OperationID(operationID)}
 
 	if err := handler.operationUpdate.Execute(r.Context(), update); err != nil {
+		handler.logger.Error(err, "update operation")
+
 		message := messageSomethingWentWrong
 
 		if errors.Is(err, app.ErrEntityNotFound) {

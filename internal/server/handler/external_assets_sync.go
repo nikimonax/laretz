@@ -42,7 +42,9 @@ func (handler *SyncExternalAssetsHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	cmd := usecase.SyncExternalAssets{SourceID: sourceID}
 
 	if err := handler.externalAssetsSync.Execute(r.Context(), cmd); err != nil {
-		mutate := renderer.AssetsWithError(messageSomethingWentWrong, pages.DialogSyncAssets)
+		handler.logger.Error(err, "sync external assets")
+
+		mutate := renderer.AssetsWithError(messageSyncFailed, pages.DialogSyncAssets)
 		if err := handler.responseRenderer.Render(r.Context(), w, mutate); err != nil {
 			handler.logger.Error(err, "render")
 		}

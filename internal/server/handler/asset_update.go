@@ -67,10 +67,12 @@ func (handler *UpdateAssetHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := handler.assetUpdate.Execute(r.Context(), cmd); err != nil {
+		handler.logger.Error(err, "update asset")
+
 		message := messageSomethingWentWrong
 
 		if errors.Is(err, app.ErrEntityNotFound) {
-			message = "Asset not found."
+			message = messageAssetNotFound
 		}
 
 		if errors.Is(err, app.ErrSourceMismatch) {

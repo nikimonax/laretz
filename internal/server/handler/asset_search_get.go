@@ -10,6 +10,7 @@ import (
 	"github.com/nikimonax/laretz/internal/app/usecase"
 	"github.com/nikimonax/laretz/internal/domain"
 	"github.com/nikimonax/laretz/internal/server/renderer"
+	"github.com/nikimonax/laretz/internal/server/views/pages"
 )
 
 type AssetSearchHandler struct {
@@ -27,11 +28,20 @@ func (handler *AssetSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	var relinkID domain.AssetID
 
 	if raw := r.URL.Query().Get("relink"); raw != "" {
-		if id, err := strconv.ParseInt(raw, 10, 64); err == nil && id > 0 {
-			relinkID = domain.AssetID(id)
+		id, err := strconv.ParseInt(raw, 10, 64)
+
+		if err != nil || id <= 0 {
+			handler.renderSearch(w, r, query, 0, "Invalid relink parameter.")
+			return
 		}
+
+		relinkID = domain.AssetID(id)
 	}
 
+	handler.renderSearch(w, r, query, relinkID, "")
+}
+
+func (handler *AssetSearchHandler) renderSearch(w http.ResponseWriter, r *http.Request, query string, relinkID domain.AssetID, message string) {
 	responseRenderer := renderer.AssetSearch(
 		handler.search,
 		handler.assetGet,
@@ -40,7 +50,13 @@ func (handler *AssetSearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		relinkID,
 	)
 
-	if err := responseRenderer.Render(r.Context(), w); err != nil {
+	var mutates []renderer.Mutate[pages.AssetSearchData]
+
+	if message != "" {
+		mutates = append(mutates, renderer.AssetSearchWithError(message))
+	}
+
+	if err := responseRenderer.Render(r.Context(), w, mutates...); err != nil {
 		handler.logger.Error(err, "render")
 	}
 }

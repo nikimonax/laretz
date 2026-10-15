@@ -61,6 +61,8 @@ func (handler *UpdatePortfolioHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	if err := handler.portfolioUpdate.Execute(r.Context(), cmd); err != nil {
+		handler.logger.Error(err, "update portfolio")
+
 		message := messageSomethingWentWrong
 
 		if errors.Is(err, app.ErrEntityNotFound) {

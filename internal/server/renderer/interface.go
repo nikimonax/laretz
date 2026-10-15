@@ -16,12 +16,12 @@ func (f RendererFunc[PageData]) Render(ctx context.Context, w io.Writer, data Pa
 }
 
 type Provider[PageData any] interface {
-	Provide(ctx context.Context) PageData
+	Provide(ctx context.Context) (PageData, error)
 }
 
-type ProviderFunc[PageData any] func(ctx context.Context) PageData
+type ProviderFunc[PageData any] func(ctx context.Context) (PageData, error)
 
-func (f ProviderFunc[PageData]) Provide(ctx context.Context) PageData {
+func (f ProviderFunc[PageData]) Provide(ctx context.Context) (PageData, error) {
 	return f(ctx)
 }
 

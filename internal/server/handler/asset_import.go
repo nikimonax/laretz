@@ -59,6 +59,8 @@ func (handler *ImportAssetHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := handler.assetImport.Execute(r.Context(), cmd); err != nil {
+		handler.logger.Error(err, "import asset")
+
 		message := messageSomethingWentWrong
 
 		if errors.Is(err, app.ErrEntityNotFound) {

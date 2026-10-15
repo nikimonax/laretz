@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/nikimonax/laretz/internal/app/usecase"
@@ -15,19 +16,20 @@ func renderHome(ctx context.Context, w io.Writer, data pages.HomeData) error {
 
 func provideHomeData(
 	portfolioList *usecase.ListPortfoliosUseCase,
-) func(ctx context.Context) pages.HomeData {
-	return func(ctx context.Context) pages.HomeData {
+) func(ctx context.Context) (pages.HomeData, error) {
+	return func(ctx context.Context) (pages.HomeData, error) {
 		var data pages.HomeData
 
 		summaries, err := portfolioList.Execute(ctx)
 
 		if err != nil {
-			data.Error = views.Error{Message: messageInternalError}
-		} else {
-			data.Portfolios = summaries
+			data.Error = views.Error{Message: messageSomethingWentWrong}
+			return data, fmt.Errorf("list portfolios: %w", err)
 		}
 
-		return data
+		data.Portfolios = summaries
+
+		return data, nil
 	}
 }
 

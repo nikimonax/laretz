@@ -35,10 +35,12 @@ func (handler *DeleteAssetHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	cmd := usecase.DeleteAsset{ID: domain.AssetID(assetID)}
 
 	if err := handler.assetDelete.Execute(r.Context(), cmd); err != nil {
+		handler.logger.Error(err, "delete asset")
+
 		message := messageSomethingWentWrong
 
 		if errors.Is(err, app.ErrEntityNotFound) {
-			message = "Asset not found."
+			message = messageAssetNotFound
 		}
 
 		if errors.Is(err, app.ErrAssetInUse) {

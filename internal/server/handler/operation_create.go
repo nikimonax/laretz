@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-logr/logr"
 
+	"github.com/nikimonax/laretz/internal/app"
 	"github.com/nikimonax/laretz/internal/app/usecase"
 	"github.com/nikimonax/laretz/internal/domain"
 	"github.com/nikimonax/laretz/internal/server/views/pages"
@@ -38,7 +40,15 @@ func (handler *CreateOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	if err := handler.operationCreate.Execute(r.Context(), cmd); err != nil {
-		renderPortfolioPage(w, r, handler.logger, handler.portfolioGet, handler.assetsList, domain.PortfolioID(portfolioID), messageSomethingWentWrong, pages.DialogCreateOperation)
+		handler.logger.Error(err, "create operation")
+
+		message := messageSomethingWentWrong
+
+		if errors.Is(err, app.ErrEntityNotFound) {
+			message = messageAssetNotFound
+		}
+
+		renderPortfolioPage(w, r, handler.logger, handler.portfolioGet, handler.assetsList, domain.PortfolioID(portfolioID), message, pages.DialogCreateOperation)
 		return
 	}
 

@@ -42,6 +42,8 @@ func (handler *DeleteOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	cmd := usecase.DeleteOperation{ID: domain.OperationID(operationID)}
 
 	if err := handler.operationDelete.Execute(r.Context(), cmd); err != nil {
+		handler.logger.Error(err, "delete operation")
+
 		message := messageSomethingWentWrong
 
 		if errors.Is(err, app.ErrEntityNotFound) {

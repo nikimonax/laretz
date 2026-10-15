@@ -39,7 +39,9 @@ func (handler *FetchQuotesHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	cmd := usecase.FetchQuotes{PortfolioID: domain.PortfolioID(portfolioID)}
 
 	if err := handler.quotesFetch.Execute(r.Context(), cmd); err != nil {
-		message := messageSomethingWentWrong
+		handler.logger.Error(err, "fetch quotes")
+
+		message := messageQuotesFetchFailed
 
 		if errors.Is(err, app.ErrEntityNotFound) {
 			message = messagePortfolioNotFound

@@ -3,6 +3,7 @@ package renderer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/nikimonax/laretz/internal/app"
@@ -22,8 +23,8 @@ func provideAssetSearchData(
 	externalAssetsCount *usecase.CountExternalAssetsUseCase,
 	query string,
 	relinkID domain.AssetID,
-) func(ctx context.Context) pages.AssetSearchData {
-	return func(ctx context.Context) pages.AssetSearchData {
+) func(ctx context.Context) (pages.AssetSearchData, error) {
+	return func(ctx context.Context) (pages.AssetSearchData, error) {
 		var data pages.AssetSearchData
 
 		data.Query = query
@@ -31,8 +32,8 @@ func provideAssetSearchData(
 		count, err := externalAssetsCount.Execute(ctx)
 
 		if err != nil {
-			data.Error = views.Error{Message: messageInternalError}
-			return data
+			data.Error = views.Error{Message: messageSomethingWentWrong}
+			return data, fmt.Errorf("count external assets: %w", err)
 		}
 
 		data.CatalogEmpty = count == 0
@@ -40,14 +41,15 @@ func provideAssetSearchData(
 		if relinkID != 0 {
 			asset, err := assetGet.Execute(ctx, relinkID)
 
-			if errors.Is(err, app.ErrEntityNotFound) {
-				data.Error = views.Error{Message: "Asset not found."}
-				return data
-			}
-
 			if err != nil {
-				data.Error = views.Error{Message: messageInternalError}
-				return data
+				message := messageSomethingWentWrong
+
+				if errors.Is(err, app.ErrEntityNotFound) {
+					message = "Asset not found."
+				}
+
+				data.Error = views.Error{Message: message}
+				return data, fmt.Errorf("get asset %d: %w", relinkID, err)
 			}
 
 			data.Relink = &pages.AssetRelink{
@@ -58,19 +60,19 @@ func provideAssetSearchData(
 		}
 
 		if query == "" {
-			return data
+			return data, nil
 		}
 
 		results, err := search.Execute(ctx, usecase.SearchExternalAssets{Query: query})
 
 		if err != nil {
-			data.Error = views.Error{Message: messageInternalError}
-			return data
+			data.Error = views.Error{Message: messageSomethingWentWrong}
+			return data, fmt.Errorf("search external assets: %w", err)
 		}
 
 		data.Results = results
 
-		return data
+		return data, nil
 	}
 }
 
