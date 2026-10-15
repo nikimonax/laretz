@@ -114,7 +114,7 @@ func TestBalanceTimeline_HoldingIntervals(t *testing.T) {
 				{From: t0.Truncate(time.Hour), To: t1.Truncate(time.Hour)},
 			},
 		},
-		"zero balance at start produces no interval": {
+		"negative balance produces interval": {
 			operations: []domain.Operation{sell(1, t0, "1")},
 			want:       []domain.HoldingInterval{{From: t0.Truncate(time.Hour), To: until}},
 		},
