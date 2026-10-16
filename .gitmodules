@@ -1,0 +1,4 @@
+[submodule "go-autotests"]
+	path = tools/go-autotests
+	url = https://github.com/Yandex-Practicum/go-autotests.git
+	branch = main

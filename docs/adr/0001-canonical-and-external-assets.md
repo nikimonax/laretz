@@ -8,4 +8,4 @@ Storing provider ids directly on the asset — rejected: it locks the core to on
 
 ## Consequences
 
-Re-linking an Asset to a different ExternalAsset is a normal operation. Adding a new provider never touches core entities — only a new plugin behind the `AssetCatalog`/`QuoteFeed` ports.
+Re-linking an Asset to a different ExternalAsset is a normal operation. Adding a new provider never touches core entities — only a new plugin behind the `ExternalAssetProvider` (catalog, now) and `QuoteFeed` (prices, later) ports. See ADR-0004 for how plugins get enabled.

@@ -1,2 +1,12 @@
 .agents
+.vscode
+
+.playwright-mcp
+
+coverage.out
+bin/*
+
+config.yaml
 .env
+.data
+

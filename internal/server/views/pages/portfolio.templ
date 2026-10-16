@@ -1,0 +1,344 @@
+package pages
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/nikimonax/laretz/internal/domain"
+	"github.com/nikimonax/laretz/internal/server/views"
+	"github.com/nikimonax/laretz/internal/server/views/components"
+)
+
+const (
+	DialogCreateOperation       = "create-operation"
+	DialogEditOperationFormat   = "edit-operation-%d"
+	DialogDeleteOperationFormat = "delete-operation-%d"
+)
+
+type PortfolioData struct {
+	Portfolio  domain.Portfolio
+	Total      domain.Value
+	Positions  []domain.ValuedPosition
+	Operations []domain.Operation
+	OpsPage    int
+	OpsPages   int
+	Assets     []domain.Asset
+	Error      views.Error
+}
+
+templ operationFormFields(data PortfolioData, op *domain.Operation) {
+	<div class="grid">
+		<label>
+			Type
+			<select name="type" required autofocus>
+				<option value="buy" selected?={ op != nil && op.Type == domain.OperationBuy }>Buy</option>
+				<option value="sell" selected?={ op != nil && op.Type == domain.OperationSell }>Sell</option>
+			</select>
+		</label>
+		<label>
+			Asset
+			<select name="asset_id" required>
+				for _, asset := range data.Assets {
+					<option value={ fmt.Sprintf("%d", asset.ID) } selected?={ op != nil && asset.ID == op.AssetID }>{ asset.Symbol }</option>
+				}
+			</select>
+		</label>
+	</div>
+	<label>
+		Time
+		<input type="datetime-local" name="executed_at" required max={ time.Now().Format("2006-01-02T15:04") }
+			if op != nil {
+				value={ op.ExecutedAt.Local().Format("2006-01-02T15:04") }
+			}
+		/>
+	</label>
+	<div class="grid">
+		<label>
+			Quantity
+			<input type="number" name="quantity" step="any" min="0" required data-op-qty
+				if op != nil {
+					value={ op.Quantity.String() }
+				}
+			/>
+		</label>
+		<label>
+			Price, USD
+			<input type="number" name="price" step="any" min="0" data-op-price/>
+		</label>
+		<label>
+			Total, USD
+			<input type="number" name="total_usd" step="any" min="0" required data-op-total
+				if op != nil {
+					value={ op.TotalUSD.String() }
+				}
+			/>
+		</label>
+	</div>
+	<small>Price is derived from quantity and total and is not stored.</small>
+	<div class="grid">
+		<label>
+			Fee amount
+			<input type="number" name="fee_amount" step="any"
+				if op != nil && op.FeeAmount != nil {
+					value={ op.FeeAmount.String() }
+				}
+			/>
+		</label>
+		<label>
+			Fee asset
+			<select name="fee_asset_id">
+				<option value="">None</option>
+				for _, asset := range data.Assets {
+					<option value={ fmt.Sprintf("%d", asset.ID) } selected?={ op != nil && op.FeeAssetID != nil && asset.ID == *op.FeeAssetID }>{ asset.Symbol }</option>
+				}
+			</select>
+		</label>
+	</div>
+	<label>
+		Note
+		<input type="text" name="note"
+			if op != nil {
+				value={ op.Note }
+			}
+		/>
+	</label>
+}
+
+templ Portfolio(data PortfolioData) {
+	@components.Layout("Portfolio · Laretz") {
+		<div class="page-head">
+			<div>
+				<h1>{ data.Portfolio.Name }</h1>
+				<p>Created { data.Portfolio.CreatedAt.Format("Jan 2, 2006") }</p>
+			</div>
+			<div class="page-actions">
+				<a class="outline" role="button" href="/">Portfolios</a>
+				if data.Portfolio.ID != 0 {
+					<form method="post" action={ templ.JoinURLErrs(fmt.Sprintf("/quotes/fetch?ops_page=%d", data.OpsPage)) }>
+						<input type="hidden" name="portfolio" value={ fmt.Sprintf("%d", data.Portfolio.ID) }/>
+						<button class="outline">Fetch quotes</button>
+					</form>
+					<button data-dialog={ DialogCreateOperation }>New operation</button>
+				}
+			</div>
+		</div>
+		if data.Error.Dialog == "" {
+			@components.Alert(data.Error.Message)
+		}
+		if data.Portfolio.ID != 0 {
+			<article class="chart-card">
+				<header class="chart-head">
+					<h2>Value</h2>
+					<p class="chart-total">
+						<strong>{ money(data.Total.Amount) }</strong> USD
+						if data.Total.Stale {
+							<span class="badge">Not current</span>
+						}
+						if data.Total.MissingPrices {
+							<span class="badge">Some assets have no price</span>
+						}
+					</p>
+				</header>
+				<div id="portfolio-chart" class="chart" data-chart={ fmt.Sprintf("/api/portfolio/%d/chart", data.Portfolio.ID) }></div>
+				<p id="portfolio-chart-empty" class="meta" hidden>No chart data yet — fetch quotes first.</p>
+				<p id="portfolio-chart-note" class="meta" hidden>Some hours exclude assets without price.</p>
+			</article>
+			<h2>Positions</h2>
+			if len(data.Positions) == 0 {
+				<article class="empty-state">
+					<h3>No open positions</h3>
+					<p>Assets with a non-zero balance appear here; closed positions remain visible in operations.</p>
+				</article>
+			} else {
+				<table class="data-table">
+					<thead>
+						<tr>
+							<th>Asset</th>
+							<th>Balance</th>
+							<th>Current price</th>
+							<th>Value</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, position := range data.Positions {
+							<tr>
+								<td><strong>{ position.Asset.Symbol }</strong></td>
+								<td>{ position.Balance.String() }</td>
+								<td>
+									if position.Priced {
+										{ money(position.PriceUSD) }
+										<span class="meta">as of { position.AsOf.Format("Jan 2, 15:04") } UTC</span>
+										if position.Stale {
+											<span class="badge">Not current</span>
+										}
+									} else {
+										<span class="meta">No price</span>
+									}
+								</td>
+								<td>
+									if position.Priced {
+										{ money(position.Value) }
+									} else {
+										<span class="meta">—</span>
+									}
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+			<h2>Operations</h2>
+			if len(data.Operations) == 0 {
+				<article class="empty-state">
+					<h3>No operations yet</h3>
+					<p>Record your first Buy or Sell in this portfolio.</p>
+					<button data-dialog={ DialogCreateOperation }>New operation</button>
+				</article>
+			} else {
+				<table class="data-table">
+					<thead>
+						<tr>
+							<th>Time</th>
+							<th>Type</th>
+							<th>Asset</th>
+							<th>Quantity</th>
+							<th>Total, USD</th>
+							<th>Fee</th>
+							<th>Note</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, op := range data.Operations {
+							<tr>
+								<td>{ op.ExecutedAt.Local().Format("Jan 2, 2006 15:04") }</td>
+								<td>
+									if op.Type == domain.OperationBuy {
+										Buy
+									} else {
+										Sell
+									}
+								</td>
+								<td><strong>{ assetSymbol(data.Assets, op.AssetID) }</strong></td>
+								<td>{ op.Quantity.String() }</td>
+								<td>{ op.TotalUSD.String() }</td>
+								<td>
+									if op.FeeAmount != nil && op.FeeAssetID != nil {
+										{ op.FeeAmount.String() + " " + assetSymbol(data.Assets, *op.FeeAssetID) }
+									}
+								</td>
+								<td>{ op.Note }</td>
+								<td class="row-actions">
+									<button class="outline" data-dialog={ fmt.Sprintf(DialogEditOperationFormat, op.ID) }>Edit</button>
+									<button class="outline" data-dialog={ fmt.Sprintf(DialogDeleteOperationFormat, op.ID) }>Delete</button>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+				if data.OpsPages > 1 {
+					<nav class="pager" aria-label="Operations pages">
+						if data.OpsPage > 1 {
+							<a class="outline" role="button" href={ templ.JoinURLErrs(fmt.Sprintf("/portfolio/%d?ops_page=%d", data.Portfolio.ID, data.OpsPage-1)) }>Previous</a>
+						}
+						<span>{ fmt.Sprintf("Page %d of %d", data.OpsPage, data.OpsPages) }</span>
+						if data.OpsPage < data.OpsPages {
+							<a class="outline" role="button" href={ templ.JoinURLErrs(fmt.Sprintf("/portfolio/%d?ops_page=%d", data.Portfolio.ID, data.OpsPage+1)) }>Next</a>
+						}
+					</nav>
+				}
+			}
+			<dialog id={ DialogCreateOperation } open?={ data.Error.Dialog == DialogCreateOperation }>
+				<article>
+					<form method="post" action={ templ.JoinURLErrs(fmt.Sprintf("/portfolio/%d/operation?ops_page=%d", data.Portfolio.ID, data.OpsPage)) } data-op-form>
+						<header><h3>New operation</h3></header>
+						if data.Error.Dialog == DialogCreateOperation {
+							@components.Alert(data.Error.Message)
+						}
+						@operationFormFields(data, nil)
+						<footer>
+							<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+							<button type="submit">Create</button>
+						</footer>
+					</form>
+				</article>
+			</dialog>
+			for _, op := range data.Operations {
+				<dialog id={ fmt.Sprintf(DialogEditOperationFormat, op.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogEditOperationFormat, op.ID) }>
+					<article>
+						<form method="post" action={ templ.JoinURLErrs(fmt.Sprintf("/portfolio/%d/operation/%d?ops_page=%d", data.Portfolio.ID, op.ID, data.OpsPage)) } data-op-form>
+							<header><h3>Edit operation</h3></header>
+							if data.Error.Dialog == fmt.Sprintf(DialogEditOperationFormat, op.ID) {
+								@components.Alert(data.Error.Message)
+							}
+							@operationFormFields(data, &op)
+							<footer>
+								<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+								<button type="submit">Save</button>
+							</footer>
+						</form>
+					</article>
+				</dialog>
+				<dialog id={ fmt.Sprintf(DialogDeleteOperationFormat, op.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogDeleteOperationFormat, op.ID) }>
+					<article>
+						<form method="post" action={ templ.JoinURLErrs(fmt.Sprintf("/portfolio/%d/operation/%d?ops_page=%d", data.Portfolio.ID, op.ID, data.OpsPage)) }>
+							<input type="hidden" name="_method" value="DELETE"/>
+							<header><h3>Delete operation</h3></header>
+							if data.Error.Dialog == fmt.Sprintf(DialogDeleteOperationFormat, op.ID) {
+								@components.Alert(data.Error.Message)
+							}
+							<p>Delete this operation?</p>
+							<footer>
+								<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+								<button type="submit" class="outline">Delete</button>
+							</footer>
+						</form>
+					</article>
+				</dialog>
+			}
+		}
+		<script>
+			document.addEventListener('input',function(e){
+			var f=e.target.closest('[data-op-form]');
+			if(!f)return;
+			var q=f.querySelector('[data-op-qty]'),p=f.querySelector('[data-op-price]'),t=f.querySelector('[data-op-total]');
+			var num=function(s){var v=parseFloat(s);return isNaN(v)?null:v};
+			var fix=function(x){return String(Number(x.toPrecision(12)))};
+			if(e.target===t){
+			var qv=num(q.value);
+			if(qv&&t.value!=='')p.value=fix(num(t.value)/qv);
+			}else{
+			var qv=num(q.value),pv=num(p.value);
+			if(qv&&pv)t.value=fix(qv*pv);
+			}
+			});
+		</script>
+		<script>
+			document.addEventListener('DOMContentLoaded',function(){
+			var el=document.getElementById('portfolio-chart');
+			if(!el)return;
+			var empty=document.getElementById('portfolio-chart-empty'),note=document.getElementById('portfolio-chart-note');
+			var h=280;
+			var money=function(v){return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})};
+			var axis=function(u,vals){return vals.map(function(v){return '$'+v.toLocaleString('en-US',{notation:'compact',maximumFractionDigits:1})})};
+			var value=function(u,v){return v==null?'':money(v)};
+			fetch(el.dataset.chart).then(function(r){return r.ok?r.json():null}).then(function(row){
+			if(!row||!row.ts.length){if(empty)empty.hidden=false;return}
+			if(note&&row.missing.some(Boolean))note.hidden=false;
+			var dark=matchMedia('(prefers-color-scheme: dark)').matches;
+			var muted=dark?getComputedStyle(document.documentElement).getPropertyValue('--pico-muted-color').trim():null;
+			var themed=function(a){return muted?Object.assign({stroke:muted,grid:{stroke:'rgba(255,255,255,0.08)'},ticks:{stroke:muted}},a):a};
+			var chart=new uPlot({
+			width:el.clientWidth,height:h,
+			series:[
+			{},
+			{label:'Value',stroke:'#4f46e5',width:2,fill:'rgba(79,70,229,0.07)',value:value}
+			],
+			axes:[themed({}),themed({values:axis})]
+			},[row.ts,row.value],el);
+			window.addEventListener('resize',function(){chart.setSize({width:el.clientWidth,height:h})});
+			}).catch(function(){if(empty)empty.hidden=false});
+			});
+		</script>
+	}
+}

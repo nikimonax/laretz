@@ -4,11 +4,11 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Сервер слушает только loopback, при старте открывает системный браузер на своём адресе
-- [ ] Логирование zap через интерфейс logr, запросы логируются middleware
-- [ ] Method spoofing: POST с `_method=DELETE` обрабатывается как удаление (тест)
-- [ ] Origin/Host check на POST: чужой origin отклоняется (тест)
-- [ ] Статика (Pico.css, uPlot) вшита в бинарник (go:embed) и отдаётся с `/static`, работает офлайн
-- [ ] `golangci-lint` проходит; команды/запросы пока отсутствуют, но слои app/domain/impl/server созданы с fx-модулями
+- [x] Сервер слушает только loopback, при старте открывает системный браузер на своём адресе
+- [x] Логирование zap через интерфейс logr, запросы логируются middleware
+- [x] Method spoofing: POST с `_method=DELETE` обрабатывается как удаление (тест)
+- [x] Origin/Host check на POST: чужой origin отклоняется (тест)
+- [x] Статика (Pico.css, uPlot) вшита в бинарник (go:embed) и отдаётся с `/static`, работает офлайн
+- [x] `golangci-lint` проходит; команды/запросы пока отсутствуют, но слои app/domain/impl/server созданы с fx-модулями

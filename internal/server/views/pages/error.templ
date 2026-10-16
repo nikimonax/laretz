@@ -1,0 +1,22 @@
+package pages
+
+import "github.com/nikimonax/laretz/internal/server/views/components"
+
+type ErrorData struct {
+	Title string
+	Detail string
+}
+
+templ ErrorPage(data ErrorData) {
+	@components.Layout(data.Title + " · Laretz") {
+		<article class="error-state">
+			<header>
+				<h1>{ data.Title }</h1>
+			</header>
+			<p>{ data.Detail }</p>
+			<footer>
+				<a href="/">Back to home</a>
+			</footer>
+		</article>
+	}
+}

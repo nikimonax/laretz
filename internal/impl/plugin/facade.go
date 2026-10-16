@@ -1,0 +1,71 @@
+package plugin
+
+import (
+	"github.com/go-logr/logr"
+
+	"github.com/nikimonax/laretz/pkg/plugin"
+)
+
+type Unmarshable interface {
+	Unmarshal(v any) error
+}
+
+type Facade struct {
+	configs map[PluginID]Unmarshable
+	logger  logr.Logger
+
+	providers ExternalAssetProviderRegistry
+	quotes    QuoteFeedRegistry
+}
+
+type BoundFacade struct {
+	Facade
+
+	pluginID PluginID
+}
+
+func (app *Facade) WithPlugin(pluginID PluginID) *BoundFacade {
+	return &BoundFacade{Facade: *app, pluginID: pluginID}
+}
+
+// Logger implements [plugin.App].
+func (app *BoundFacade) Logger() logr.Logger {
+	return app.logger.WithValues("plugin", app.pluginID)
+}
+
+// GetConfig implements [plugin.App].
+func (app *BoundFacade) GetConfig(cfg any) error {
+	raw, ok := app.configs[app.pluginID]
+
+	if ok {
+		return raw.Unmarshal(cfg)
+	}
+
+	return nil
+}
+
+// RegisterAssetProvider implements [plugin.App].
+func (app *BoundFacade) RegisterAssetProvider(provider plugin.AssetProvider) error {
+	return app.providers.Register(app.pluginID, NewExternalAssetProviderAdapter(provider, app.pluginID))
+}
+
+// RegisterQuoteProvider implements [plugin.App].
+func (app *BoundFacade) RegisterQuoteProvider(feed plugin.QuoteProvider) error {
+	return app.quotes.Register(app.pluginID, NewQuoteFeedAdapter(feed, app.pluginID))
+}
+
+var _ plugin.App = (*BoundFacade)(nil)
+
+func NewFacade(
+	configs map[PluginID]Unmarshable,
+	logger logr.Logger,
+	providers ExternalAssetProviderRegistry,
+	quotes QuoteFeedRegistry,
+) *Facade {
+	return &Facade{
+		configs:   configs,
+		logger:    logger,
+		providers: providers,
+		quotes:    quotes,
+	}
+}

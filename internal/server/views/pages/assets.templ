@@ -1,0 +1,148 @@
+package pages
+
+import (
+	"fmt"
+
+	"github.com/nikimonax/laretz/internal/domain"
+	"github.com/nikimonax/laretz/internal/server/views"
+	"github.com/nikimonax/laretz/internal/server/views/components"
+)
+
+const (
+	DialogRenameAssetFormat = "rename-asset-%d"
+	DialogDeleteAssetFormat = "delete-asset-%d"
+	DialogSyncAssets        = "sync-assets"
+)
+
+type AssetsData struct {
+	Assets       []domain.Asset
+	Providers    []domain.SourceID
+	CatalogEmpty bool
+	Error        views.Error
+}
+
+templ Assets(data AssetsData) {
+	@components.Layout("Assets · Laretz") {
+		<div class="page-head">
+			<div>
+				<h1>Assets</h1>
+				<p>Canonical assets imported from market data catalogs.</p>
+			</div>
+			<div class="page-actions">
+				if len(data.Providers) > 0 {
+					<button class="outline" data-dialog={ DialogSyncAssets }>Sync assets</button>
+				}
+				<a class="outline" role="button" href="/assets/search">Import asset</a>
+			</div>
+		</div>
+		if data.Error.Dialog == "" {
+			@components.Alert(data.Error.Message)
+		}
+		if len(data.Assets) == 0 {
+			<article class="empty-state">
+				if data.CatalogEmpty {
+					<h2>Catalog is empty</h2>
+					if len(data.Providers) > 0 {
+						<p>Sync assets from a market data source to start importing.</p>
+						<button data-dialog={ DialogSyncAssets }>Sync assets</button>
+					} else {
+						<p>No market data source is configured. Add a provider API key to the config first.</p>
+					}
+				} else {
+					<h2>No assets yet</h2>
+					<p>Search the synced catalog and import your first asset.</p>
+					<a role="button" href="/assets/search">Search catalog</a>
+				}
+			</article>
+		} else {
+			<table class="data-table">
+				<thead>
+					<tr>
+						<th>Symbol</th>
+						<th>Name</th>
+						<th>Source</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, a := range data.Assets {
+						<tr>
+							<td><strong>{ a.Symbol }</strong></td>
+							<td>{ a.Name }</td>
+							<td><span class="meta">{ a.External.SourceID } · { a.External.ExternalID }</span></td>
+							<td class="row-actions">
+								<button class="outline" data-dialog={ fmt.Sprintf(DialogRenameAssetFormat, a.ID) }>Rename</button>
+								<a class="outline" role="button" href={ templ.JoinURLErrs(fmt.Sprintf("/assets/search?relink=%d", a.ID)) }>Re-link</a>
+								<button class="outline" data-dialog={ fmt.Sprintf(DialogDeleteAssetFormat, a.ID) }>Delete</button>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+		for _, a := range data.Assets {
+			<dialog id={ fmt.Sprintf(DialogRenameAssetFormat, a.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogRenameAssetFormat, a.ID) }>
+				<article>
+					<form method="post" action={ templ.JoinURLErrs(fmt.Sprintf("/assets/%d", a.ID)) }>
+						<header><h3>Rename asset</h3></header>
+						if data.Error.Dialog == fmt.Sprintf(DialogRenameAssetFormat, a.ID) {
+							@components.Alert(data.Error.Message)
+						}
+						<label>
+							Symbol
+							<input type="text" name="symbol" value={ a.Symbol } required autofocus/>
+						</label>
+						<label>
+							Name
+							<input type="text" name="name" value={ a.Name } required/>
+						</label>
+						<footer>
+							<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+							<button type="submit">Rename</button>
+						</footer>
+					</form>
+				</article>
+			</dialog>
+			<dialog id={ fmt.Sprintf(DialogDeleteAssetFormat, a.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogDeleteAssetFormat, a.ID) }>
+				<article>
+					<form method="post" action={ templ.JoinURLErrs(fmt.Sprintf("/assets/%d", a.ID)) }>
+						<input type="hidden" name="_method" value="DELETE"/>
+						<header><h3>Delete asset</h3></header>
+						if data.Error.Dialog == fmt.Sprintf(DialogDeleteAssetFormat, a.ID) {
+							@components.Alert(data.Error.Message)
+						}
+						<p>Delete &ldquo;{ a.Symbol }&rdquo;? Assets with recorded operations cannot be deleted.</p>
+						<footer>
+							<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+							<button type="submit" class="outline">Delete</button>
+						</footer>
+					</form>
+				</article>
+			</dialog>
+		}
+		if len(data.Providers) > 0 {
+			<dialog id={ DialogSyncAssets } open?={ data.Error.Dialog == DialogSyncAssets }>
+				<article>
+					<form method="post" action="/assets/sync">
+						<header><h3>Sync assets</h3></header>
+						if data.Error.Dialog == DialogSyncAssets {
+							@components.Alert(data.Error.Message)
+						}
+						<label>
+							Source
+							<select name="source" required autofocus>
+								for _, source := range data.Providers {
+									<option value={ source }>{ source }</option>
+								}
+							</select>
+						</label>
+						<footer>
+							<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+							<button type="submit">Sync</button>
+						</footer>
+					</form>
+				</article>
+			</dialog>
+		}
+	}
+}

@@ -1,0 +1,122 @@
+package pages
+
+import (
+	"fmt"
+
+	"github.com/nikimonax/laretz/internal/app/usecase"
+	"github.com/nikimonax/laretz/internal/server/views"
+	"github.com/nikimonax/laretz/internal/server/views/components"
+)
+
+const (
+	DialogCreatePortfolio       = "create-portfolio"
+	DialogRenamePortfolioFormat = "rename-portfolio-%d"
+	DialogDeletePortfolioFormat = "delete-portfolio-%d"
+)
+
+type HomeData struct {
+	Portfolios []usecase.PortfolioSummary
+	Error      views.Error
+}
+
+templ Home(data HomeData) {
+	@components.Layout("Laretz") {
+		<div class="page-head">
+			<div>
+				<h1>Portfolios</h1>
+				<p>Record Buy/Sell operations and value your portfolios with market data.</p>
+			</div>
+			<div class="page-actions">
+				<button data-dialog={ DialogCreatePortfolio }>New portfolio</button>
+			</div>
+		</div>
+		if data.Error.Dialog == "" {
+			@components.Alert(data.Error.Message)
+		}
+		if len(data.Portfolios) == 0 {
+			<article class="empty-state">
+				<h2>No portfolios yet</h2>
+				<p>Create your first portfolio to start tracking operations.</p>
+				<button data-dialog={ DialogCreatePortfolio }>Create portfolio</button>
+			</article>
+		} else {
+			<ul class="portfolio-grid">
+				for _, p := range data.Portfolios {
+					<li>
+						<article class="portfolio-card">
+							<h3><a href={ templ.JoinURLErrs(fmt.Sprintf("/portfolio/%d", p.Portfolio.ID)) }>{ p.Portfolio.Name }</a></h3>
+							<p class="value">
+								<strong>{ money(p.Value.Amount) }</strong> USD
+								if p.Value.Stale {
+									<span class="badge">Not current</span>
+								}
+								if p.Value.MissingPrices {
+									<span class="badge">Some assets have no price</span>
+								}
+							</p>
+							<p class="meta">Created { p.Portfolio.CreatedAt.Format("Jan 2, 2006") }</p>
+							<footer>
+								<button class="outline" data-dialog={ fmt.Sprintf(DialogRenamePortfolioFormat, p.Portfolio.ID) }>Rename</button>
+								<button class="outline" data-dialog={ fmt.Sprintf(DialogDeletePortfolioFormat, p.Portfolio.ID) }>Delete</button>
+							</footer>
+						</article>
+					</li>
+				}
+			</ul>
+		}
+	}
+	<dialog id={ DialogCreatePortfolio } open?={ data.Error.Dialog == DialogCreatePortfolio }>
+		<article>
+			<form method="post" action="/portfolio">
+				<header><h3>New portfolio</h3></header>
+				if data.Error.Dialog == DialogCreatePortfolio {
+					@components.Alert(data.Error.Message)
+				}
+				<label>
+					Name
+					<input type="text" name="name" placeholder="e.g. Long term" required autofocus/>
+				</label>
+				<footer>
+					<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+					<button type="submit">Create</button>
+				</footer>
+			</form>
+		</article>
+	</dialog>
+	for _, p := range data.Portfolios {
+		<dialog id={ fmt.Sprintf(DialogRenamePortfolioFormat, p.Portfolio.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogRenamePortfolioFormat, p.Portfolio.ID) }>
+			<article>
+				<form method="post" action={ fmt.Sprintf("/portfolio/%d", p.Portfolio.ID) }>
+					<header><h3>Rename portfolio</h3></header>
+					if data.Error.Dialog == fmt.Sprintf(DialogRenamePortfolioFormat, p.Portfolio.ID) {
+						@components.Alert(data.Error.Message)
+					}
+					<label>
+						Name
+						<input type="text" name="name" value={ p.Portfolio.Name } required autofocus/>
+					</label>
+					<footer>
+						<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+						<button type="submit">Rename</button>
+					</footer>
+				</form>
+			</article>
+		</dialog>
+		<dialog id={ fmt.Sprintf(DialogDeletePortfolioFormat, p.Portfolio.ID) } open?={ data.Error.Dialog == fmt.Sprintf(DialogDeletePortfolioFormat, p.Portfolio.ID) }>
+			<article>
+				<form method="post" action={ fmt.Sprintf("/portfolio/%d", p.Portfolio.ID) }>
+					<input type="hidden" name="_method" value="DELETE"/>
+					<header><h3>Delete portfolio</h3></header>
+					if data.Error.Dialog == fmt.Sprintf(DialogDeletePortfolioFormat, p.Portfolio.ID) {
+						@components.Alert(data.Error.Message)
+					}
+					<p>Delete &ldquo;{ p.Portfolio.Name }&rdquo; and all of its operations?</p>
+					<footer>
+						<button type="button" class="outline" onclick="this.closest('dialog').close()">Cancel</button>
+						<button type="submit" class="outline">Delete</button>
+					</footer>
+				</form>
+			</article>
+		</dialog>
+	}
+}

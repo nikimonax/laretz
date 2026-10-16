@@ -1,0 +1,117 @@
+version: "2"
+
+linters:
+  enable:
+    - bodyclose
+    - copyloopvar
+    - depguard
+    - dupl
+    - errorlint
+    - goconst
+    - gocyclo
+    - misspell
+    - noctx
+    - nolintlint
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - testifylint
+    - unused
+  settings:
+    depguard:
+      rules:
+        domain-layer:
+          files:
+            - "**/internal/domain/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - github.com/shopspring/decimal
+        application-layer:
+          files:
+            - "**/internal/app/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - github.com/nikimonax/laretz/internal/app
+            - github.com/nikimonax/laretz/internal/domain
+            - github.com/go-logr/logr
+            - github.com/shopspring/decimal
+        infrastructure-layer:
+          files:
+            - "**/internal/impl/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/nikimonax/laretz/internal/server
+              desc: impl must not depend on server
+            - pkg: github.com/nikimonax/laretz/internal/lib
+              desc: impl must not depend on lib
+            - pkg: github.com/nikimonax/laretz/internal/testing
+              desc: impl must not depend on testing helpers
+            - pkg: github.com/nikimonax/laretz/cmd
+              desc: impl must not depend on cmd
+        plugin-api:
+          files:
+            - "**/pkg/plugin**"
+            - "!$test"
+          allow:
+            - $gostd
+            - github.com/go-logr/logr
+        plugin-implementation:
+          files:
+            - "**/plugin**"
+            - "!**/internal/**"
+            - "!**/pkg/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/nikimonax/laretz/cmd
+              desc: plugins must not depend on cmd
+            - pkg: github.com/nikimonax/laretz/internal
+              desc: plugins must not depend on internal
+            - pkg: github.com/nikimonax/laretz/plugin
+              desc: plugins must not depend on other plugins
+    gocyclo:
+      min-complexity: 15
+    goconst:
+      ignore-tests: true
+    dupl:
+      threshold: 100
+    revive:
+      enable-default-rules: true
+      rules:
+        - name: exported
+          disabled: true
+        - name: package-comments
+          disabled: true
+    rowserrcheck:
+      packages:
+        - database/sql
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    generated: lax
+    rules:
+      - path: _test\.go
+        linters:
+          - bodyclose
+          - dupl
+          - sqlclosecheck
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/nikimonax/laretz
+
+run:
+  timeout: 3m
+  issues-exit-code: 1
+  tests: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
